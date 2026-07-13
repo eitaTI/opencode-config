@@ -63,13 +63,8 @@
     },
 
     // --- Heavy / needs setup (disabled by default) ---
-    // Chrome DevTools: needs Google Chrome installed. Many tools -> high context.
-    "chrome-devtools": {
-      "type": "local",
-      "enabled": false,
-      "command": ["bunx", "chrome-devtools-mcp@latest", "--headless"]
-    },
-    // Playwright: browser automation. Token-heavy; enable on demand.
+    // Playwright: browser automation (self-contained; downloads its own browser
+    // via `bunx playwright install`). Token-heavy; enable on demand.
     "playwright": {
       "type": "local",
       "enabled": false,

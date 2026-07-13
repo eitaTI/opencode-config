@@ -20,8 +20,7 @@ ativos apenas os necessários por projeto.
 
 | Nome | Pacote | Por que desativado | Para ativar |
 |------|--------|-------------------|--------------|
-| `chrome-devtools` | `bunx chrome-devtools-mcp@latest --headless` | Precisa do Google Chrome instalado; muitas ferramentas → contexto pesado | Troque `"enabled": false` por `true`; instale o Chrome |
-| `playwright` | `bunx @playwright/mcp@latest --headless` | Automação de browser; token-heavy | Troque `"enabled": false` por `true`; rode `bunx playwright install` |
+| `playwright` | `bunx @playwright/mcp@latest --headless` | Automação de browser; token-heavy; baixa seu próprio navegador (`bunx playwright install`) | Troque `"enabled": false` por `true`; rode `bunx playwright install` |
 
 ## Desativado — exige API key
 

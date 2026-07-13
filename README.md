@@ -27,7 +27,7 @@ Detalhes, motivação e configuração extra de cada item estão em `docs/`:
 | Categoria | Arquivo | Resumo |
 |-----------|----------|---------|
 | **LSP** | [docs/lsp.md](docs/lsp.md) | Built-ins (TS/JS) + `basedpyright` (Python, substitui pyright), `ruff server`, `tailwindcss`, `emmet` — tudo via `bunx` |
-| **MCP** | [docs/mcp.md](docs/mcp.md) | `context7`, `gh_grep`, `fetch`, `sequentialthinking`, `git` (ativos, sem cred); `chrome-devtools`/`playwright`/`brave-search` (opcionais) |
+| **MCP** | [docs/mcp.md](docs/mcp.md) | `context7`, `gh_grep`, `fetch`, `sequentialthinking`, `git` (ativos, sem cred); `playwright`/`brave-search` (opcionais) |
 | **Plugins** | [docs/plugins.md](docs/plugins.md) | `opencode-shell-strategy`, `opencode-notify`, `opencode-websearch-cited`, `opencode-dynamic-context-pruning`, `opencode-mem` (memória local), `oh-my-opencode-slim` (orquestrador) |
 
 - **Skills** globais em `skills/`: `git-release`, `conventional-commits`,
@@ -37,7 +37,6 @@ Detalhes, motivação e configuração extra de cada item estão em `docs/`:
 
 - **Bun** — instalado automaticamente pelo `install.sh`. Runner único.
 - **ruff** — binário Rust instalado pelo `install.sh` (sem `uv`/`pip`).
-- **Google Chrome** — só se for usar `chrome-devtools`.
 - **`BRAVE_API_KEY`** — só se for ativar `brave-search`.
 
 ## Estrutura
