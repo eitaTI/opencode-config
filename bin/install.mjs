@@ -3,8 +3,10 @@
 // Run via:  npx github:EitaTI/opencode-config
 //            bunx github:EitaTI/opencode-config
 // Works on Windows, macOS and Linux. Copies opencode.jsonc, skills/
-// and docs/ into the OpenCode global config dir, and installs Bun + ruff
-// + the oh-my-opencode-slim orchestrator.
+// and docs/ into the OpenCode global config dir, and materializes the
+// oh-my-opencode-slim orchestrator. Requires Bun + uv (and ruff for the
+// Python LSP) to be installed beforehand — it checks for them and prints
+// install instructions for any that are missing, then asks you to re-run.
 
 import fs from "node:fs";
 import path from "node:path";
@@ -52,12 +54,6 @@ function which(cmd) {
   }
 }
 
-function prependPath(dir) {
-  if (!dir) return;
-  const sep = isWin ? ";" : ":";
-  process.env.PATH = `${dir}${sep}${process.env.PATH || ""}`;
-}
-
 function run(cmd, args, opts = {}) {
   const full = isWin ? `${cmd}.exe` : cmd;
   return execSync(full, { args, stdio: "inherit", ...opts });
@@ -77,45 +73,49 @@ function copyRecursive(src, dest) {
 }
 
 // ---------------------------------------------------------------------------
-// OS-specific bootstrappers
+// prerequisite checks (no auto-install — keeps the installer simple)
 // ---------------------------------------------------------------------------
-function installBun() {
-  log("Installing Bun (https://bun.sh)...");
-  if (isWin) {
-    run("powershell", ["-NoProfile", "-Command", "irm https://bun.sh/install.ps1 | iex"]);
-  } else {
-    execSync("sh", ["-c", "curl -fsSL https://bun.sh/install | bash"], { stdio: "inherit" });
-  }
-  const candidates = isWin
-    ? [path.join(os.homedir(), ".bun", "bin"), path.join(process.env.LOCALAPPDATA || "", ".bun", "bin")]
-    : [path.join(os.homedir(), ".bun", "bin")];
-  for (const c of candidates) if (fs.existsSync(c)) { prependPath(c); break; }
+// Tools the installed config depends on. The installer only checks for them
+// and prints install instructions when any are missing; it never installs.
+const PREREQS = [
+  {
+    name: "bun",
+    note: "runner for bunx-based MCP servers + oh-my-opencode-slim",
+    win: 'powershell -c "irm bun.sh/install.ps1 | iex"',
+    unix: "curl -fsSL https://bun.sh/install | bash",
+  },
+  {
+    name: "uv",
+    note: "runs the official Python fetch MCP server via uvx",
+    win: 'powershell -c "irm https://astral.sh/uv/install.ps1 | iex"',
+    unix: "curl -LsSf https://astral.sh/uv/install.sh | sh",
+  },
+  {
+    name: "ruff",
+    note: "Python LSP + formatter used by the config",
+    win: 'powershell -c "irm https://astral.sh/ruff/install.ps1 | iex"',
+    unix: "curl -LsSf https://astral.sh/ruff/install.sh | sh",
+  },
+];
+
+function checkPrerequisites() {
+  return PREREQS.filter((p) => !which(p.name));
 }
 
-function installRuff() {
-  log("Installing ruff (standalone binary)...");
-  if (isWin) {
-    run("powershell", ["-NoProfile", "-Command", "irm https://astral.sh/ruff/install.ps1 | iex"]);
-  } else {
-    execSync("sh", ["-c", "curl -LsSf https://astral.sh/ruff/install.sh | sh"], { stdio: "inherit" });
+function printPrerequisiteHelp(missing) {
+  console.log(`
+Missing required tool(s). The installed config depends on them:
+`);
+  for (const p of missing) {
+    const cmd = isWin ? p.win : p.unix;
+    console.log(`  • ${p.name} — ${p.note}`);
+    console.log(`      ${cmd}`);
   }
-  const candidates = isWin
-    ? [path.join(os.homedir(), ".ruff", "bin"), path.join(process.env.USERPROFILE || "", ".ruff", "bin")]
-    : [path.join(os.homedir(), ".local", "bin"), path.join(os.homedir(), ".ruff", "bin")];
-  for (const c of candidates) if (fs.existsSync(c)) { prependPath(c); break; }
-}
+  console.log(`
+Install the above, then re-run:
 
-function installUv() {
-  log("Installing uv (https://docs.astral.sh/uv)...");
-  if (isWin) {
-    run("powershell", ["-NoProfile", "-Command", "irm https://astral.sh/uv/install.ps1 | iex"]);
-  } else {
-    execSync("sh", ["-c", "curl -LsSf https://astral.sh/uv/install.sh | sh"], { stdio: "inherit" });
-  }
-  const candidates = isWin
-    ? [path.join(process.env.LOCALAPPDATA || "", "uv"), path.join(os.homedir(), ".local", "bin")]
-    : [path.join(os.homedir(), ".local", "bin")];
-  for (const c of candidates) if (fs.existsSync(c)) { prependPath(c); break; }
+  npx github:EitaTI/opencode-config
+`);
 }
 
 function setEnvVar() {
@@ -146,17 +146,17 @@ Usage:
   bunx github:EitaTI/opencode-config [--dry-run]
 
 Options:
-  --dry-run     Print what would happen without installing Bun/ruff
-                or writing files.
+  --dry-run     Print what would happen without writing files (still
+                reports missing prerequisites).
   -h, --help    Show this help.
 
 What it does:
-  1. Copies opencode.jsonc, skills/ and docs/ into the OpenCode
+  1. Checks that Bun, uv and ruff are installed (prints install
+     commands for any that are missing, then stops).
+  2. Copies opencode.jsonc, skills/ and docs/ into the OpenCode
      global config dir (~/.config/opencode on Linux, etc.).
-  2. Installs Bun (if missing) — single runner for MCP servers + plugins.
-  3. Installs ruff (if missing) — Python LSP + formatter.
-  4. Materializes the oh-my-opencode-slim multi-agent orchestrator.
-  5. Enables the experimental LSP tool flag
+  3. Materializes the oh-my-opencode-slim multi-agent orchestrator.
+  4. Enables the experimental LSP tool flag
      (OPENCODE_EXPERIMENTAL_LSP_TOOL).
 `);
 }
@@ -165,6 +165,19 @@ function main() {
   const args = process.argv.slice(2);
   if (args.includes("-h") || args.includes("--help")) return printHelp();
   const dry = args.includes("--dry-run");
+
+  // Prerequisite check — Bun/uv/ruff must already be installed.
+  const missing = checkPrerequisites();
+  if (missing.length) {
+    if (dry) {
+      warn("dry-run: missing prerequisites (config would still be copied):");
+      for (const p of missing) warn(`  ${p.name} not found`);
+    } else {
+      printPrerequisiteHelp(missing);
+      console.error("\nAborting. Install the tools above, then re-run the command.");
+      process.exit(1);
+    }
+  }
 
   const target = resolveTargetDir();
   log(`Target OpenCode config dir: ${target}`);
@@ -179,18 +192,9 @@ function main() {
   }
 
   if (dry) {
-    log("[dry-run] would install Bun + ruff, run oh-my-opencode-slim, and set env var. Done.");
+    log("[dry-run] would run oh-my-opencode-slim and set env var. Done.");
     return;
   }
-
-  if (!which("bun")) installBun();
-  else log(`Bun already present: ${which("bun")}`);
-
-  if (!which("ruff")) installRuff();
-  else log(`ruff already present: ${which("ruff")}`);
-
-  if (!which("uv")) installUv();
-  else log(`uv already present: ${which("uv")}`);
 
   log("Setting up oh-my-opencode-slim (multi-agent orchestrator)...");
   try {
