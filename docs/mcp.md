@@ -15,6 +15,7 @@ ativos apenas os necessários por projeto.
 | `fetch` | local | `bunx @modelcontextprotocol/server-fetch` | Recupera conteúdo de URLs para o agente ler páginas/docs | nenhuma |
 | `sequentialthinking` | local | `bunx @modelcontextprotocol/server-sequentialthinking` | Ferramenta de raciocínio passo-a-passo para problemas complexos | nenhuma |
 | `git` | local | `bunx @cyanheads/git-mcp-server` | Operações Git versionadas via MCP (alternativa node ao `mcp-server-git` do Python) | nenhuma |
+| `sqlite` | local | `bunx @mokei/mcp-sqlite --db :memory:` | Consulta/gera bancos SQLite via MCP | nenhuma (default em memória; para um arquivo, copie a entrada com `--db /caminho.db`) |
 
 ## Opcionais — desativados por padrão
 

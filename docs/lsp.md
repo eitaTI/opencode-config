@@ -13,9 +13,25 @@ servidor se precisar (ex.: `"pyright": { "disabled": true }`).
 
 | LSP | Linguagem | Motivação | Config extra |
 |-----|-----------|-----------|--------------|
-| `typescript` / `eslint` / `oxlint` | TS/JS | Diagnósticos e lint em tempo real | nenhuma |
+| `typescript` / `oxlint` | TS/JS | Diagnósticos e lint em tempo real | nenhuma |
+| `eslint` | TS/JS | **desativado** — substituído por `eslint-lsp` (abaixo) | — |
 
-> `pyright` (built-in) está **desativado** neste repo — veja `basedpyright`.
+> `pyright` (built-in) também está **desativado** — veja `basedpyright`.
+
+## ESLint LSP (substitui o built-in `eslint`)
+
+### `eslint-lsp` (via `vscode-eslint-language-server`)
+- **Comando:** `bunx -p vscode-langservers-extracted vscode-eslint-language-server --stdio`
+- **Escopo:** `.js`, `.jsx`, `.ts`, `.tsx`, `.mjs`, `.cjs`.
+- **Motivação:** Language Server oficial do ESLint (extraído da extensão
+  VS Code) — diagnósticos + code actions. O `eslint` built-in é
+  desativado para evitar diagnósticos duplicados.
+- **Config extra:** nenhuma — instalado sob demanda pelo `bunx`.
+
+> **Ferramenta LSP experimental:** o OpenCode expõe ferramentas baseadas em
+> LSP quando a env `OPENCODE_EXPERIMENTAL_LSP_TOOL=true` está definida.
+> O `install.sh` exporta essa var no rc do shell (`~/.bashrc`/`~/.zshrc`)
+> de forma idempotente. Para checar: `echo $OPENCODE_EXPERIMENTAL_LSP_TOOL`.
 
 ## Python
 

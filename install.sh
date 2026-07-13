@@ -41,6 +41,21 @@ echo "==> Setting up oh-my-opencode-slim (multi-agent orchestrator)..."
 bunx oh-my-opencode-slim@latest install || \
   echo "   (warn) oh-my-opencode-slim install step failed; run manually: bunx oh-my-opencode-slim@latest install"
 
+# --- Experimental LSP tool (OPENCODE_EXPERIMENTAL_LSP_TOOL) ---
+# OpenCode reads this env var at startup to enable experimental LSP-based
+# tools. Export it into the shell rc so it persists for OpenCode launches.
+# Guarded so re-running install.sh never duplicates the line.
+EXP_LINE='export OPENCODE_EXPERIMENTAL_LSP_TOOL=true'
+for rc in "$HOME/.bashrc" "$HOME/.zshrc" "$HOME/.profile"; do
+  if [ -f "$rc" ] && ! grep -qF "OPENCODE_EXPERIMENTAL_LSP_TOOL" "$rc"; then
+    echo "" >> "$rc"
+    echo "# >>> opencode-config >>>" >> "$rc"
+    echo "$EXP_LINE" >> "$rc"
+    echo "# <<< opencode-config <<<" >> "$rc"
+    echo "==> Added $EXP_LINE to $rc"
+  fi
+done
+
 echo
 echo "Linked OpenCode config -> $DEST"
 echo "Verify with:  opencode mcp list   &&   opencode debug config"

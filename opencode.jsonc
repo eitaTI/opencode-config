@@ -9,6 +9,7 @@
   // Docs warn LSP can be memory-heavy; keep an eye on it per project.
   "lsp": {
     "pyright": { "disabled": true },
+    "eslint": { "disabled": true }, // replaced by vscode-eslint-language-server below
 
     // Local-first; ruff binary (standalone, installed by install.sh).
     "ruff": {
@@ -29,6 +30,12 @@
     "emmet": {
       "command": ["bunx", "emmet-language-server", "--stdio"],
       "extensions": [".html", ".css", ".scss"]
+    },
+    // ESLint LSP (official, extracted from the VS Code ESLint extension).
+    // Replaces the built-in eslint LSP to avoid duplicate diagnostics.
+    "eslint-lsp": {
+      "command": ["bunx", "-p", "vscode-langservers-extracted", "vscode-eslint-language-server", "--stdio"],
+      "extensions": [".js", ".jsx", ".ts", ".tsx", ".mjs", ".cjs"]
     }
   },
 
@@ -60,6 +67,13 @@
     "git": {
       "type": "local",
       "command": ["bunx", "@cyanheads/git-mcp-server"]
+    },
+
+    // SQLite (local): query .db files. Defaults to an in-memory DB;
+    // for a real file, copy this entry with "--db", "/path/to.db".
+    "sqlite": {
+      "type": "local",
+      "command": ["bunx", "@mokei/mcp-sqlite", "--db", ":memory:"]
     },
 
     // --- Heavy / needs setup (disabled by default) ---
