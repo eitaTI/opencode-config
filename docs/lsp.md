@@ -57,13 +57,3 @@ servidor se precisar (ex.: `"pyright": { "disabled": true }`).
 
 - **TS/JS:** Prettier (nativo do OpenCode, `"formatter": true`).
 - **Python:** ruff (via LSP acima).
-
-## Opcional (não ativo por padrão)
-
-### `biome` (TS/JS) — alternativa ao eslint/oxlint + prettier
-- **Comando:** `bunx @biomejs/biome lsp-proxy`
-- **Motivação:** formatter + linter rápido, nativo de Bun.
-- **Atenção:** conflita com os LSPs built-in (`eslint`/`oxlint`) e com o
-  formatter Prettier (diagnósticos duplicados). Para usá-lo, desative os
-  built-ins: `"typescript": { "disabled": true }` e configure o formatter
-  custom para o Biome. Deixado desativado de propósito neste repo.
