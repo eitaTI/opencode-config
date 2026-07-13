@@ -22,6 +22,16 @@ npx github:EitaTI/opencode-config
 > ```powershell
 > $env:Path = [System.Environment]::GetEnvironmentVariable("Path","Machine") + ";" + [System.Environment]::GetEnvironmentVariable("Path","User")
 > ```
+>
+> **Após um update no repo:** o `bunx` cacheia pacotes `github:` por até
+> 24h (bug conhecido do Bun, [oven-sh/bun#27379](https://github.com/oven-sh/bun/issues/27379))
+> e não re-baixa sozinho após um push. Se rodar o comando e o comportamento
+> não mudar, limpe os caches antes de rodar de novo:
+> ```powershell
+> bun pm cache rm
+> Remove-Item -Recurse -Force "$env:TEMP\bunx-*"
+> bunx github:EitaTI/opencode-config
+> ```
 
 Esse comando (1) copia `opencode.jsonc`, `skills/` e `docs/` para o
 diretório global do OpenCode, (2) confere os pré-requisitos **Bun**, **uv** e
