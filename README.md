@@ -25,8 +25,10 @@ git para facilitar novas instalações. Basta clonar e rodar o instalador.
 
 - **Bun** (instalado automaticamente pelo `install.sh` se ausente). É o
   runner único para MCP servers e plugins.
-- `ruff` (para o LSP de Python): `uv tool install ruff` — ou já vem com o
-  ambiente Python.
+- **ruff** (LSP de Python + formatter): instalado pelo `install.sh` via
+  installer standalone (`curl -LsSf https://astral.sh/ruff/install.sh | sh`).
+  É um binário direto (Rust), não um package-runner — por isso não roda via
+  `bunx`. Nenhum `uv`/`pip` é necessário.
 - Google Chrome (somente se for usar `chrome-devtools`).
 - OpenCode: `opencode mcp list` / `opencode debug config` para verificar.
 

@@ -19,6 +19,17 @@ else
   echo "==> Bun already present: $(bun --version)"
 fi
 
+# --- ruff (Python LSP + formatter) ---
+# Standalone Rust binary. Astral does NOT publish ruff to npm, so it can't run
+# via `bunx`; this is a direct binary, not a package runner. Installed standalone
+# so the only required ecosystem is Bun (no uv/pip needed).
+if ! command -v ruff >/dev/null 2>&1; then
+  echo "==> Installing ruff (standalone binary)..."
+  curl -LsSf https://astral.sh/ruff/install.sh | sh
+else
+  echo "==> ruff already present: $(ruff --version)"
+fi
+
 mkdir -p "$DEST"
 
 ln -sfn "$SRC/opencode.jsonc" "$DEST/opencode.jsonc"
