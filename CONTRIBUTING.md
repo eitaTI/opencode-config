@@ -22,20 +22,17 @@ to a user's global OpenCode config dir.
 ## Changing the installer (`bin/install.mjs`)
 
 - It runs under **Node** (`#!/usr/bin/env node`), not Bun.
-- It **checks** for Bun / uv / ruff and prints install commands if any
+- It **checks** for Node.js/uv/ruff and prints install commands if any
   are missing — it does **not** auto-install them.
 - Pass command arguments with **`spawnSync`**. `execSync(full, { args })`
-  silently drops `args` and breaks `setx` / `bunx` calls.
-- After pushing, tell testers to **bust the bunx cache** (bunx caches
-  `github:` packages for 24h — oven-sh/bun#27379):
-  `bun pm cache rm` + remove `$env:TEMP\bunx-*`, then re-run.
+  silently drops `args` and breaks `setx` / `npx` calls.
 
 ## Changing MCP servers (`opencode.jsonc`)
 
 - `fetch` uses `uvx mcp-server-fetch` (official Python server). The npm
   name `@modelcontextprotocol/server-fetch` does **not** exist, and the
   unscoped `mcp-server-fetch` is a **malicious canary** — never use it.
-- `sequentialthinking` is `bunx @modelcontextprotocol/server-sequential-thinking`
+- `sequentialthinking` is `npx -y @modelcontextprotocol/server-sequential-thinking`
   (note the **hyphen**; the no-hyphen name 404s).
 
 ## Adding or editing a skill

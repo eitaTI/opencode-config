@@ -8,38 +8,36 @@ set -euo pipefail
 SRC="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 DEST="${XDG_CONFIG_HOME:-$HOME/.config}/opencode"
 
-# --- Bun (single runner for MCP servers + plugins) ---
-if ! command -v bun >/dev/null 2>&1; then
-  echo "==> Installing Bun (https://bun.sh)..."
-  curl -fsSL https://bun.sh/install | bash
-  # Make bun available in this shell for the steps below.
-  export BUN_INSTALL="${BUN_INSTALL:-$HOME/.bun}"
-  export PATH="$BUN_INSTALL/bin:$PATH"
+# --- Node.js (single runner for MCP servers + plugins) ---
+if ! command -v node >/dev/null 2>&1; then
+	echo "==> Installing Node.js LTS..."
+	curl -fsSL https://deb.nodesource.com/setup_lts.x | sudo -E bash -
+	sudo apt-get install -y nodejs
 else
-  echo "==> Bun already present: $(bun --version)"
+	echo "==> Node.js already present: $(node --version)"
 fi
 
 # --- ruff (Python LSP + formatter) ---
 # Standalone Rust binary. Astral does NOT publish ruff to npm, so it can't run
-# via `bunx`; this is a direct binary, not a package runner. Installed standalone
-# so the only required ecosystem is Bun (no uv/pip needed).
+# via `npx`; this is a direct binary, not a package runner. Installed standalone
+# so the only required ecosystem is Node.js (no uv/pip needed).
 if ! command -v ruff >/dev/null 2>&1; then
-  echo "==> Installing ruff (standalone binary)..."
-  curl -LsSf https://astral.sh/ruff/install.sh | sh
+	echo "==> Installing ruff (standalone binary)..."
+	curl -LsSf https://astral.sh/ruff/install.sh | sh
 else
-  echo "==> ruff already present: $(ruff --version)"
+	echo "==> ruff already present: $(ruff --version)"
 fi
 
 mkdir -p "$DEST"
 
 ln -sfn "$SRC/opencode.jsonc" "$DEST/opencode.jsonc"
-ln -sfn "$SRC/skills"          "$DEST/skills"
+ln -sfn "$SRC/skills" "$DEST/skills"
 
-# --- Multi-agent orchestrator (oh-my-opencode-slim) ---
+# --- Multi-agent orchestrator (oh-my-openagent) ---
 # Idempotent: materializes its agents/commands into the OpenCode config dir.
-echo "==> Setting up oh-my-opencode-slim (multi-agent orchestrator)..."
-bunx oh-my-opencode-slim@latest install || \
-  echo "   (warn) oh-my-opencode-slim install step failed; run manually: bunx oh-my-opencode-slim@latest install"
+echo "==> Setting up oh-my-openagent (multi-agent orchestrator)..."
+npx -y oh-my-openagent@latest install ||
+	echo "   (warn) oh-my-openagent install step failed; run manually: npx -y oh-my-openagent@latest install"
 
 # --- Experimental LSP tool (OPENCODE_EXPERIMENTAL_LSP_TOOL) ---
 # OpenCode reads this env var at startup to enable experimental LSP-based
@@ -47,13 +45,13 @@ bunx oh-my-opencode-slim@latest install || \
 # Guarded so re-running install.sh never duplicates the line.
 EXP_LINE='export OPENCODE_EXPERIMENTAL_LSP_TOOL=true'
 for rc in "$HOME/.bashrc" "$HOME/.zshrc" "$HOME/.profile"; do
-  if [ -f "$rc" ] && ! grep -qF "OPENCODE_EXPERIMENTAL_LSP_TOOL" "$rc"; then
-    echo "" >> "$rc"
-    echo "# >>> opencode-config >>>" >> "$rc"
-    echo "$EXP_LINE" >> "$rc"
-    echo "# <<< opencode-config <<<" >> "$rc"
-    echo "==> Added $EXP_LINE to $rc"
-  fi
+	if [ -f "$rc" ] && ! grep -qF "OPENCODE_EXPERIMENTAL_LSP_TOOL" "$rc"; then
+		echo "" >>"$rc"
+		echo "# >>> opencode-config >>>" >>"$rc"
+		echo "$EXP_LINE" >>"$rc"
+		echo "# <<< opencode-config <<<" >>"$rc"
+		echo "==> Added $EXP_LINE to $rc"
+	fi
 done
 
 echo

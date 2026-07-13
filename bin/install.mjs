@@ -1,10 +1,9 @@
 #!/usr/bin/env node
 // EitaTI — OpenCode global config installer (cross-platform).
 // Run via:  npx github:EitaTI/opencode-config
-//            bunx github:EitaTI/opencode-config
 // Works on Windows, macOS and Linux. Copies opencode.jsonc, skills/
 // and docs/ into the OpenCode global config dir, and materializes the
-// oh-my-opencode-slim orchestrator. Requires Bun + uv (and ruff for the
+// oh-my-openagent orchestrator. Requires Node.js/npm + uv (and ruff for the
 // Python LSP) to be installed beforehand — it checks for them and prints
 // install instructions for any that are missing, then asks you to re-run.
 
@@ -58,8 +57,8 @@ function run(cmd, args, opts = {}) {
   const full = isWin ? `${cmd}.exe` : cmd;
   // spawnSync searches PATH on every platform and passes `args` safely
   // (execSync ignores an `args` option, which silently dropped every
-  // argument — e.g. setx / oh-my-opencode-slim). Throws on failure
-  // so callers can catch non-fatal steps (e.g. oh-my-opencode-slim).
+  // argument — e.g. setx / oh-my-openagent). Throws on failure
+  // so callers can catch non-fatal steps (e.g. oh-my-openagent).
   const r = spawnSync(full, args, { stdio: "inherit", ...opts });
   if (r.error) throw r.error;
   if (r.status !== 0 && r.status !== null) {
@@ -88,10 +87,10 @@ function copyRecursive(src, dest) {
 // and prints install instructions when any are missing; it never installs.
 const PREREQS = [
   {
-    name: "bun",
-    note: "runner for bunx-based MCP servers + oh-my-opencode-slim",
-    win: 'powershell -c "irm bun.sh/install.ps1 | iex"',
-    unix: "curl -fsSL https://bun.sh/install | bash",
+    name: "node",
+    note: "JavaScript runtime for npx-based MCP servers + LSP + oh-my-openagent",
+    win: 'powershell -c "winget install OpenJS.NodeJS.LTS"',
+    unix: "curl -fsSL https://deb.nodesource.com/setup_lts.x | sudo -E bash - && sudo apt-get install -y nodejs",
   },
   {
     name: "uv",
@@ -153,7 +152,6 @@ EitaTI — OpenCode global config installer
 
 Usage:
   npx github:EitaTI/opencode-config [--dry-run]
-  bunx github:EitaTI/opencode-config [--dry-run]
 
 Options:
   --dry-run     Print what would happen without writing files (still
@@ -161,11 +159,11 @@ Options:
   -h, --help    Show this help.
 
 What it does:
-  1. Checks that Bun, uv and ruff are installed (prints install
+  1. Checks that Node.js, uv and ruff are installed (prints install
      commands for any that are missing, then stops).
   2. Copies opencode.jsonc, skills/ and docs/ into the OpenCode
      global config dir (~/.config/opencode on Linux, etc.).
-  3. Materializes the oh-my-opencode-slim multi-agent orchestrator.
+  3. Materializes the oh-my-openagent multi-agent orchestrator.
   4. Enables the experimental LSP tool flag
      (OPENCODE_EXPERIMENTAL_LSP_TOOL).
 `);
@@ -176,7 +174,7 @@ function main() {
   if (args.includes("-h") || args.includes("--help")) return printHelp();
   const dry = args.includes("--dry-run");
 
-  // Prerequisite check — Bun/uv/ruff must already be installed.
+  // Prerequisite check — Node.js/uv/ruff must already be installed.
   const missing = checkPrerequisites();
   if (missing.length) {
     if (dry) {
@@ -202,15 +200,15 @@ function main() {
   }
 
   if (dry) {
-    log("[dry-run] would run oh-my-opencode-slim and set env var. Done.");
+    log("[dry-run] would run oh-my-openagent and set env var. Done.");
     return;
   }
 
-  log("Setting up oh-my-opencode-slim (multi-agent orchestrator)...");
+  log("Setting up oh-my-openagent (multi-agent orchestrator)...");
   try {
-    run("bunx", ["oh-my-opencode-slim@latest", "install"]);
+    run("npx", ["-y", "oh-my-openagent@latest", "install"]);
   } catch {
-    warn("oh-my-opencode-slim install failed; run manually: bunx oh-my-opencode-slim@latest install");
+    warn("oh-my-openagent install failed; run manually: npx -y oh-my-openagent@latest install");
   }
 
   setEnvVar();

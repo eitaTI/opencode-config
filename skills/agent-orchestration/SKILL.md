@@ -1,6 +1,6 @@
 ---
 name: agent-orchestration
-description: Decide when to delegate work to the oh-my-opencode-slim multi-agent orchestrator versus working directly in the current session. Use when a task is large or multi-shaped (scaffolding, mixed models, parallel sub-tasks) rather than a small single-file edit.
+description: Decide when to delegate work to the oh-my-openagent multi-agent orchestrator versus working directly in the current session. Use when a task is large or multi-shaped (scaffolding, mixed models, parallel sub-tasks) rather than a small single-file edit.
 license: MIT
 compatibility: opencode
 metadata:
@@ -8,12 +8,12 @@ metadata:
   workflow: orchestration
 ---
 ## What this skill covers
-This repo uses **oh-my-opencode-slim** (★6.8k) as the single multi-agent
+This repo uses **oh-my-openagent** (★63k+) as the single multi-agent
 orchestrator for OpenCode, plus **opencode-mem** for local, credential-free
-memory. Both run through Bun (`bunx`).
+memory. Both run through npx.
 
 ## When to use the orchestrator
-Delegate to oh-my-opencode-slim when the task is large or multi-shaped:
+Delegate to oh-my-openagent when the task is large or multi-shaped:
 - Scaffolding a feature across explorer + implementer + reviewer agents
 - Mixing models (e.g. a fast model for exploration, a strong one for code)
 - Parallel sub-tasks that should not block the main session
@@ -32,5 +32,5 @@ Delegate to oh-my-opencode-slim when the task is large or multi-shaped:
 ## Notes
 - Only one orchestrator is configured on purpose — avoid stacking multiple
   agent frameworks, as each adds many tools/agents to the context.
-- All MCP servers and plugins run via `bunx`; keep that as the single
+- All MCP servers and plugins run via `npx`; keep that as the single
   runner for portability.

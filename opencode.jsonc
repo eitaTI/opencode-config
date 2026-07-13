@@ -4,8 +4,8 @@
   "autoupdate": true,
 
   // LSP: built-ins auto-install per language (typescript/eslint/oxlint).
-  // pyright is disabled in favor of basedpyright (stricter fork, runs via bunx).
-  // ruff/tailwindcss/emmet are local servers started via bunx (single runner).
+  // pyright is disabled in favor of basedpyright (stricter fork, runs via npx).
+  // ruff/tailwindcss/emmet are local servers started via npx (single runner).
   // Docs warn LSP can be memory-heavy; keep an eye on it per project.
   "lsp": {
     "pyright": { "disabled": true },
@@ -16,26 +16,71 @@
       "command": ["ruff", "server"],
       "extensions": [".py", ".pyi"]
     },
-    // Stricter Python type checking (basedpyright-langserver via bunx -p).
+    // Stricter Python type checking (basedpyright-langserver via npx -y).
     "basedpyright": {
-      "command": ["bunx", "-p", "basedpyright", "basedpyright-langserver", "--stdio"],
+      "command": ["npx", "-y", "basedpyright", "basedpyright-langserver", "--stdio"],
       "extensions": [".py", ".pyi"]
+    },
+    // TypeScript/JavaScript (via vtsls).
+    "vtsls": {
+      "command": ["vtsls", "--stdio"],
+      "extensions": [".ts", ".tsx", ".js", ".jsx"]
     },
     // Tailwind CSS intelligence (only activates on CSS/SCSS).
     "tailwindcss": {
-      "command": ["bunx", "@tailwindcss/language-server", "--stdio"],
+      "command": ["npx", "-y", "@tailwindcss/language-server", "--stdio"],
       "extensions": [".css", ".scss"]
     },
     // Emmet abbreviations in HTML/CSS.
     "emmet": {
-      "command": ["bunx", "emmet-language-server", "--stdio"],
+      "command": ["npx", "-y", "emmet-language-server", "--stdio"],
       "extensions": [".html", ".css", ".scss"]
     },
     // ESLint LSP (official, extracted from the VS Code ESLint extension).
     // Replaces the built-in eslint LSP to avoid duplicate diagnostics.
     "eslint-lsp": {
-      "command": ["bunx", "-p", "vscode-langservers-extracted", "vscode-eslint-language-server", "--stdio"],
+      "command": ["npx", "-y", "vscode-langservers-extracted", "vscode-eslint-language-server", "--stdio"],
       "extensions": [".js", ".jsx", ".ts", ".tsx", ".mjs", ".cjs"]
+    },
+    // Bash/Shell scripting.
+    "bash-language-server": {
+      "command": ["bash-language-server", "start"],
+      "extensions": [".sh", ".bash"]
+    },
+    // Dockerfile support.
+    "docker-langserver": {
+      "command": ["docker-langserver", "--stdio"],
+      "extensions": ["Dockerfile", ".dockerfile"]
+    },
+    // YAML configuration files.
+    "yaml-language-server": {
+      "command": ["yaml-language-server", "--stdio"],
+      "extensions": [".yaml", ".yml"]
+    },
+    // JSON/JSONC support.
+    "vscode-json-language-server": {
+      "command": ["vscode-json-language-server", "--stdio"],
+      "extensions": [".json", ".jsonc"]
+    },
+    // HTML support.
+    "vscode-html-language-server": {
+      "command": ["vscode-html-language-server", "--stdio"],
+      "extensions": [".html", ".htm"]
+    },
+    // CSS/SCSS/LESS support.
+    "vscode-css-language-server": {
+      "command": ["vscode-css-language-server", "--stdio"],
+      "extensions": [".css", ".scss", ".less"]
+    },
+    // Markdown support.
+    "vscode-markdown-language-server": {
+      "command": ["vscode-markdown-language-server", "--stdio"],
+      "extensions": [".md", ".markdown"]
+    },
+    // Ansible playbooks and roles.
+    "ansible-language-server": {
+      "command": ["ansible-language-server", "--stdio"],
+      "extensions": [".yml", ".yaml"]
     }
   },
 
@@ -54,8 +99,8 @@
     },
 
     // --- Local, no credentials (enabled) ---
-    // Most servers run through Bun (`bunx`) for a single, portable runner.
-    // Bun installs the package on first run, so no global npm needed.
+    // Most servers run through npx for a portable, zero-install runner.
+    // npx installs the package on first run, so no global npm needed.
     // `fetch` uses `uvx` (official Python modelcontextprotocol server);
     // `uv` is installed by the installer and auto-manages its Python.
     "fetch": {
@@ -64,34 +109,44 @@
     },
     "sequentialthinking": {
       "type": "local",
-      "command": ["bunx", "@modelcontextprotocol/server-sequential-thinking"]
+      "command": ["npx", "-y", "@modelcontextprotocol/server-sequential-thinking"]
     },
     "git": {
       "type": "local",
-      "command": ["bunx", "@cyanheads/git-mcp-server"]
+      "command": ["npx", "-y", "@cyanheads/git-mcp-server"]
+    },
+    // Filesystem access for the agent to read/write files.
+    "filesystem": {
+      "type": "local",
+      "command": ["npx", "-y", "@modelcontextprotocol/server-filesystem", "{env:HOME}"]
+    },
+    // Memory server for persistent knowledge graph.
+    "memory": {
+      "type": "local",
+      "command": ["npx", "-y", "@modelcontextprotocol/server-memory"]
     },
 
     // SQLite (local): query .db files. Defaults to an in-memory DB;
-    // for a real file, copy this entry with "--db", "/path/to.db".
+    // for a real file, copy this entry with "--db", "/path/to/db".
     "sqlite": {
       "type": "local",
-      "command": ["bunx", "@mokei/mcp-sqlite", "--db", ":memory:"]
+      "command": ["npx", "-y", "@mokei/mcp-sqlite", "--db", ":memory:"]
     },
 
     // --- Heavy / needs setup (disabled by default) ---
     // Playwright: browser automation (self-contained; downloads its own browser
-    // via `bunx playwright install`). Token-heavy; enable on demand.
+    // via `npx playwright install`). Token-heavy; enable on demand.
     "playwright": {
       "type": "local",
       "enabled": false,
-      "command": ["bunx", "@playwright/mcp@latest", "--headless"]
+      "command": ["npx", "-y", "@playwright/mcp@latest", "--headless"]
     },
 
     // --- Needs API key (disabled) ---
     "brave-search": {
       "type": "local",
       "enabled": false,
-      "command": ["bunx", "@brave/brave-search-mcp-server", "--transport", "stdio"],
+      "command": ["npx", "-y", "@brave/brave-search-mcp-server", "--transport", "stdio"],
       "environment": {
         "BRAVE_API_KEY": "{env:BRAVE_API_KEY}"
       }
@@ -99,15 +154,20 @@
   },
 
   "plugin": [
-    "opencode-shell-strategy",
     "opencode-notify",
     "opencode-websearch-cited",
-    "opencode-dynamic-context-pruning",
+    "@tarquinen/opencode-dcp",
     // Memory: local-first, no API key (SQLite + vector index, local embeddings).
     "opencode-mem",
-    // Multi-agent orchestrator (shadow agents + auto-delegation).
-    // Materialized by `bunx oh-my-opencode-slim@latest install` in install.sh.
-    "oh-my-opencode-slim"
+    // Multi-agent orchestrator (11 agents, Team Mode, ultrawork).
+    // Materialized by `npx -y oh-my-openagent@latest install` in install.sh.
+    "oh-my-openagent",
+    // User's global plugins.
+    "opencode-wakatime",
+    "opencode-pty",
+    "opencode-snip",
+    "envsitter-guard",
+    "opencode-smart-title"
   ],
 
   "instructions": [
