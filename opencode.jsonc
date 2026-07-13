@@ -1,0 +1,83 @@
+{
+  "$schema": "https://opencode.ai/config.json",
+
+  "autoupdate": true,
+
+  // LSP: built-ins auto-install per language (typescript/eslint/oxlint, pyright).
+  // `ruff server` adds fast Python lint+format feedback alongside pyright.
+  // Docs warn LSP can be memory-heavy; keep an eye on it per project.
+  "lsp": {
+    "ruff": {
+      "command": ["ruff", "server"],
+      "extensions": [".py", ".pyi"]
+    }
+  },
+
+  // Prettier for TS/JS; ruff handles Python formatting via the LSP above.
+  "formatter": true,
+
+  "mcp": {
+    // --- Remote, no credentials (enabled) ---
+    "context7": {
+      "type": "remote",
+      "url": "https://mcp.context7.com/mcp"
+    },
+    "gh_grep": {
+      "type": "remote",
+      "url": "https://mcp.grep.app"
+    },
+
+    // --- Local, no credentials (enabled) ---
+    // Node servers use `npx -y`; Python servers use `uvx`.
+    // Prefer npx/pnpm dlx/uvx over `bun x` for portability on Linux/Windows.
+    "fetch": {
+      "type": "local",
+      "command": ["npx", "-y", "@modelcontextprotocol/server-fetch"]
+    },
+    "sequentialthinking": {
+      "type": "local",
+      "command": ["npx", "-y", "@modelcontextprotocol/server-sequentialthinking"]
+    },
+    "git": {
+      "type": "local",
+      "command": ["uvx", "mcp-server-git"]
+    },
+
+    // --- Heavy / needs setup (disabled by default) ---
+    // Chrome DevTools: needs Google Chrome installed. Many tools -> high context.
+    "chrome-devtools": {
+      "type": "local",
+      "enabled": false,
+      "command": ["npx", "-y", "chrome-devtools-mcp@latest", "--headless"]
+    },
+    // Playwright: browser automation. Token-heavy; enable on demand.
+    "playwright": {
+      "type": "local",
+      "enabled": false,
+      "command": ["npx", "-y", "@playwright/mcp@latest", "--headless"]
+    },
+
+    // --- Needs API key (disabled) ---
+    "brave-search": {
+      "type": "local",
+      "enabled": false,
+      "command": ["npx", "-y", "@brave/brave-search-mcp-server", "--transport", "stdio"],
+      "environment": {
+        "BRAVE_API_KEY": "{env:BRAVE_API_KEY}"
+      }
+    }
+  },
+
+  "plugin": [
+    "opencode-shell-strategy",
+    "opencode-notify",
+    "opencode-supermemory",
+    "opencode-websearch-cited",
+    "opencode-dynamic-context-pruning"
+  ],
+
+  "instructions": [
+    "AGENTS.md",
+    "CONTRIBUTING.md"
+  ]
+}
