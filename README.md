@@ -5,7 +5,23 @@ git para facilitar novas instalações. Clone, rode o instalador e pronto.
 
 Tudo roda via **Bun** (`bunx`) como runner único — sem `npx`/`uvx`/`pip`.
 
-## Instalação
+## Instalação rápida (um comando, cross-platform)
+
+Windows, macOS ou Linux — sem clonar, sem instalar nada antes:
+
+```bash
+npx github:EitaTI/opencode-config
+# ou, se preferir Bun:
+bunx github:EitaTI/opencode-config
+```
+
+Esse comando (1) copia `opencode.jsonc`, `skills/` e `docs/` para o
+diretório global do OpenCode, (2) instala **Bun** + **ruff** se ausentes,
+(3) materializa o orquestrador `oh-my-opencode-slim` e (4) habilita a flag
+experimental de LSP tool. Para ver o que seria feito sem alterar nada:
+`npx github:EitaTI/opencode-config --dry-run`.
+
+## Instalação via clone (dev/contribuição)
 
 ```bash
 git clone <repo-url> opencode-config
@@ -16,12 +32,12 @@ bash install.sh
 O `install.sh` (idempotente) faz:
 1. Instala o **Bun** e o **ruff** (binário standalone) se ausentes.
 2. Cria symlinks de `opencode.jsonc` e `skills/` em `~/.config/opencode`.
-3. Materializa os agentes do `oh-my-opencode-slim` (`bunx oh-my-opencode-slim@latest install`).
+3. Materializa os agentes do `oh-my-opencode-slim`
+   (`bunx oh-my-opencode-slim@latest install`).
 
 Verifique: `opencode mcp list` e `opencode debug config`.
 
 ## O que está incluído
-
 Detalhes, motivação e configuração extra de cada item estão em `docs/`:
 
 | Categoria | Arquivo | Resumo |
