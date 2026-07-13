@@ -11,7 +11,7 @@
 import fs from "node:fs";
 import path from "node:path";
 import os from "node:os";
-import { execSync, spawnSync } from "node:child_process";
+import { spawnSync } from "node:child_process";
 import { fileURLToPath } from "node:url";
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
@@ -56,7 +56,16 @@ function which(cmd) {
 
 function run(cmd, args, opts = {}) {
   const full = isWin ? `${cmd}.exe` : cmd;
-  return execSync(full, { args, stdio: "inherit", ...opts });
+  // spawnSync searches PATH on every platform and passes `args` safely
+  // (execSync ignores an `args` option, which silently dropped every
+  // argument — e.g. setx / oh-my-opencode-slim). Throws on failure
+  // so callers can catch non-fatal steps (e.g. oh-my-opencode-slim).
+  const r = spawnSync(full, args, { stdio: "inherit", ...opts });
+  if (r.error) throw r.error;
+  if (r.status !== 0 && r.status !== null) {
+    throw new Error(`command failed (status ${r.status}): ${full} ${args.join(" ")}`);
+  }
+  return r;
 }
 
 function copyRecursive(src, dest) {
