@@ -105,6 +105,19 @@ function installRuff() {
   for (const c of candidates) if (fs.existsSync(c)) { prependPath(c); break; }
 }
 
+function installUv() {
+  log("Installing uv (https://docs.astral.sh/uv)...");
+  if (isWin) {
+    run("powershell", ["-NoProfile", "-Command", "irm https://astral.sh/uv/install.ps1 | iex"]);
+  } else {
+    execSync("sh", ["-c", "curl -LsSf https://astral.sh/uv/install.sh | sh"], { stdio: "inherit" });
+  }
+  const candidates = isWin
+    ? [path.join(process.env.LOCALAPPDATA || "", "uv"), path.join(os.homedir(), ".local", "bin")]
+    : [path.join(os.homedir(), ".local", "bin")];
+  for (const c of candidates) if (fs.existsSync(c)) { prependPath(c); break; }
+}
+
 function setEnvVar() {
   log("Enabling experimental LSP tool flag...");
   if (isWin) {
@@ -175,6 +188,9 @@ function main() {
 
   if (!which("ruff")) installRuff();
   else log(`ruff already present: ${which("ruff")}`);
+
+  if (!which("uv")) installUv();
+  else log(`uv already present: ${which("uv")}`);
 
   log("Setting up oh-my-opencode-slim (multi-agent orchestrator)...");
   try {

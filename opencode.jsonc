@@ -54,15 +54,17 @@
     },
 
     // --- Local, no credentials (enabled) ---
-    // All servers run through Bun (`bunx`) for a single, portable runner.
-    // Bun installs the package on first run, so no global npm/uv needed.
+    // Most servers run through Bun (`bunx`) for a single, portable runner.
+    // Bun installs the package on first run, so no global npm needed.
+    // `fetch` uses `uvx` (official Python modelcontextprotocol server);
+    // `uv` is installed by the installer and auto-manages its Python.
     "fetch": {
       "type": "local",
-      "command": ["bunx", "@modelcontextprotocol/server-fetch"]
+      "command": ["uvx", "mcp-server-fetch"]
     },
     "sequentialthinking": {
       "type": "local",
-      "command": ["bunx", "@modelcontextprotocol/server-sequentialthinking"]
+      "command": ["bunx", "@modelcontextprotocol/server-sequential-thinking"]
     },
     "git": {
       "type": "local",
