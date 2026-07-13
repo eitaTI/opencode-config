@@ -3,13 +3,32 @@
 
   "autoupdate": true,
 
-  // LSP: built-ins auto-install per language (typescript/eslint/oxlint, pyright).
-  // `ruff server` adds fast Python lint+format feedback alongside pyright.
+  // LSP: built-ins auto-install per language (typescript/eslint/oxlint).
+  // pyright is disabled in favor of basedpyright (stricter fork, runs via bunx).
+  // ruff/tailwindcss/emmet are local servers started via bunx (single runner).
   // Docs warn LSP can be memory-heavy; keep an eye on it per project.
   "lsp": {
+    "pyright": { "disabled": true },
+
+    // Local-first; ruff binary (standalone, installed by install.sh).
     "ruff": {
       "command": ["ruff", "server"],
       "extensions": [".py", ".pyi"]
+    },
+    // Stricter Python type checking (basedpyright-langserver via bunx -p).
+    "basedpyright": {
+      "command": ["bunx", "-p", "basedpyright", "basedpyright-langserver", "--stdio"],
+      "extensions": [".py", ".pyi"]
+    },
+    // Tailwind CSS intelligence (only activates on CSS/SCSS).
+    "tailwindcss": {
+      "command": ["bunx", "@tailwindcss/language-server", "--stdio"],
+      "extensions": [".css", ".scss"]
+    },
+    // Emmet abbreviations in HTML/CSS.
+    "emmet": {
+      "command": ["bunx", "emmet-language-server", "--stdio"],
+      "extensions": [".html", ".css", ".scss"]
     }
   },
 

@@ -26,7 +26,7 @@ Detalhes, motivação e configuração extra de cada item estão em `docs/`:
 
 | Categoria | Arquivo | Resumo |
 |-----------|----------|---------|
-| **LSP** | [docs/lsp.md](docs/lsp.md) | Built-ins (TS/JS + `pyright`) + `ruff server` para Python |
+| **LSP** | [docs/lsp.md](docs/lsp.md) | Built-ins (TS/JS) + `basedpyright` (Python, substitui pyright), `ruff server`, `tailwindcss`, `emmet` — tudo via `bunx` |
 | **MCP** | [docs/mcp.md](docs/mcp.md) | `context7`, `gh_grep`, `fetch`, `sequentialthinking`, `git` (ativos, sem cred); `chrome-devtools`/`playwright`/`brave-search` (opcionais) |
 | **Plugins** | [docs/plugins.md](docs/plugins.md) | `opencode-shell-strategy`, `opencode-notify`, `opencode-websearch-cited`, `opencode-dynamic-context-pruning`, `opencode-mem` (memória local), `oh-my-opencode-slim` (orquestrador) |
 
