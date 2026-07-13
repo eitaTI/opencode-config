@@ -28,19 +28,19 @@
     },
 
     // --- Local, no credentials (enabled) ---
-    // Node servers use `npx -y`; Python servers use `uvx`.
-    // Prefer npx/pnpm dlx/uvx over `bun x` for portability on Linux/Windows.
+    // All servers run through Bun (`bunx`) for a single, portable runner.
+    // Bun installs the package on first run, so no global npm/uv needed.
     "fetch": {
       "type": "local",
-      "command": ["npx", "-y", "@modelcontextprotocol/server-fetch"]
+      "command": ["bunx", "@modelcontextprotocol/server-fetch"]
     },
     "sequentialthinking": {
       "type": "local",
-      "command": ["npx", "-y", "@modelcontextprotocol/server-sequentialthinking"]
+      "command": ["bunx", "@modelcontextprotocol/server-sequentialthinking"]
     },
     "git": {
       "type": "local",
-      "command": ["uvx", "mcp-server-git"]
+      "command": ["bunx", "@cyanheads/git-mcp-server"]
     },
 
     // --- Heavy / needs setup (disabled by default) ---
@@ -48,20 +48,20 @@
     "chrome-devtools": {
       "type": "local",
       "enabled": false,
-      "command": ["npx", "-y", "chrome-devtools-mcp@latest", "--headless"]
+      "command": ["bunx", "chrome-devtools-mcp@latest", "--headless"]
     },
     // Playwright: browser automation. Token-heavy; enable on demand.
     "playwright": {
       "type": "local",
       "enabled": false,
-      "command": ["npx", "-y", "@playwright/mcp@latest", "--headless"]
+      "command": ["bunx", "@playwright/mcp@latest", "--headless"]
     },
 
     // --- Needs API key (disabled) ---
     "brave-search": {
       "type": "local",
       "enabled": false,
-      "command": ["npx", "-y", "@brave/brave-search-mcp-server", "--transport", "stdio"],
+      "command": ["bunx", "@brave/brave-search-mcp-server", "--transport", "stdio"],
       "environment": {
         "BRAVE_API_KEY": "{env:BRAVE_API_KEY}"
       }
@@ -71,9 +71,13 @@
   "plugin": [
     "opencode-shell-strategy",
     "opencode-notify",
-    "opencode-supermemory",
     "opencode-websearch-cited",
-    "opencode-dynamic-context-pruning"
+    "opencode-dynamic-context-pruning",
+    // Memory: local-first, no API key (SQLite + vector index, local embeddings).
+    "opencode-mem",
+    // Multi-agent orchestrator (shadow agents + auto-delegation).
+    // Materialized by `bunx oh-my-opencode-slim@latest install` in install.sh.
+    "oh-my-opencode-slim"
   ],
 
   "instructions": [
