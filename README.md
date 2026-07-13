@@ -1,36 +1,9 @@
 # EitaTI — OpenCode Global Config
 
 Configuração global do [OpenCode](https://opencode.ai) da EitaTI, versionada em
-git para facilitar novas instalações. Basta clonar e rodar o instalador.
+git para facilitar novas instalações. Clone, rode o instalador e pronto.
 
-## O que está incluído
-
-- **LSP** habilitado (auto-instala `typescript`/`eslint`/`oxlint` e `pyright`
-  conforme os arquivos abertos) + `ruff server` para Python.
-- **Formatters** (Prettier para TS/JS; ruff cuida do Python).
-- **MCP servers** (ver `opencode.jsonc`):
-  - Sem credencial (ativos): `context7`, `gh_grep`, `fetch`,
-    `sequentialthinking`, `git` (via `@cyanheads/git-mcp-server`).
-  - Pesados/opcionais (desativados): `chrome-devtools`, `playwright`.
-  - Com API key (desativado): `brave-search` (precisa de `BRAVE_API_KEY`).
-  - **Todos** rodam via `bunx` (Bun) — um único runner portátil.
-- **Plugins** (instalados pelo OpenCode via Bun):
-  `opencode-shell-strategy`, `opencode-notify`, `opencode-websearch-cited`,
-  `opencode-dynamic-context-pruning`, `opencode-mem` (memória local, sem
-  credenciais) e `oh-my-opencode-slim` (orquestrador multi-agente).
-- **Skills** globais em `skills/` (`git-release`, `conventional-commits`,
-  `explain-code`, `agent-orchestration`).
-
-## Pré-requisitos
-
-- **Bun** (instalado automaticamente pelo `install.sh` se ausente). É o
-  runner único para MCP servers e plugins.
-- **ruff** (LSP de Python + formatter): instalado pelo `install.sh` via
-  installer standalone (`curl -LsSf https://astral.sh/ruff/install.sh | sh`).
-  É um binário direto (Rust), não um package-runner — por isso não roda via
-  `bunx`. Nenhum `uv`/`pip` é necessário.
-- Google Chrome (somente se for usar `chrome-devtools`).
-- OpenCode: `opencode mcp list` / `opencode debug config` para verificar.
+Tudo roda via **Bun** (`bunx`) como runner único — sem `npx`/`uvx`/`pip`.
 
 ## Instalação
 
@@ -40,36 +13,49 @@ cd opencode-config
 bash install.sh
 ```
 
-`install.sh`:
-1. Instala o **Bun** caso não esteja presente.
+O `install.sh` (idempotente) faz:
+1. Instala o **Bun** e o **ruff** (binário standalone) se ausentes.
 2. Cria symlinks de `opencode.jsonc` e `skills/` em `~/.config/opencode`.
-3. Materializa os agentes/comandos do `oh-my-opencode-slim`
-   (`bunx oh-my-opencode-slim@latest install`, idempotente).
+3. Materializa os agentes do `oh-my-opencode-slim` (`bunx oh-my-opencode-slim@latest install`).
 
-Ou manualmente:
+Verifique: `opencode mcp list` e `opencode debug config`.
 
-```bash
-ln -sf "$PWD/opencode.jsonc" ~/.config/opencode/opencode.jsonc
-ln -sfn "$PWD/skills"          ~/.config/opencode/skills
-bunx oh-my-opencode-slim@latest install
+## O que está incluído
+
+Detalhes, motivação e configuração extra de cada item estão em `docs/`:
+
+| Categoria | Arquivo | Resumo |
+|-----------|----------|---------|
+| **LSP** | [docs/lsp.md](docs/lsp.md) | Built-ins (TS/JS + `pyright`) + `ruff server` para Python |
+| **MCP** | [docs/mcp.md](docs/mcp.md) | `context7`, `gh_grep`, `fetch`, `sequentialthinking`, `git` (ativos, sem cred); `chrome-devtools`/`playwright`/`brave-search` (opcionais) |
+| **Plugins** | [docs/plugins.md](docs/plugins.md) | `opencode-shell-strategy`, `opencode-notify`, `opencode-websearch-cited`, `opencode-dynamic-context-pruning`, `opencode-mem` (memória local), `oh-my-opencode-slim` (orquestrador) |
+
+- **Skills** globais em `skills/`: `git-release`, `conventional-commits`,
+  `explain-code`, `agent-orchestration`.
+
+## Pré-requisitos
+
+- **Bun** — instalado automaticamente pelo `install.sh`. Runner único.
+- **ruff** — binário Rust instalado pelo `install.sh` (sem `uv`/`pip`).
+- **Google Chrome** — só se for usar `chrome-devtools`.
+- **`BRAVE_API_KEY`** — só se for ativar `brave-search`.
+
+## Estrutura
+
 ```
-
-## Memória (opencode-mem)
-
-Memória local, sem API key: banco SQLite + índice vetorial com embeddings
-locais. `search`/`add`/`list` funcionam sem provedor; a auto-captura de
-memórias precisa de um modelo que retorne tool-calls estruturados.
-
-## Ativando servidores opcionais
-
-Edite `opencode.jsonc` e troque `"enabled": false` por `true` em
-`chrome-devtools`, `playwright` ou `brave-search`. Para o Brave, exporte
-`BRAVE_API_KEY` (ou use `BRAVE_API_KEY_FILE`).
+opencode.jsonc          # config principal (LSP, MCP, plugins, skills)
+install.sh              # instalador idempotente
+skills/                 # skills globais
+docs/                   # lsp.md · mcp.md · plugins.md
+```
 
 ## Notas
 
-- MCPs adicionam ferramentas ao contexto; mantenha só os necessários por projeto.
-- LSP pode usar memória em projetos grandes — desative por servidor se precisar.
-- **Runner padronizado:** tudo via `bunx` (Bun). Evite misturar `npx`/`uvx`.
-- Um único orquestrador (`oh-my-opencode-slim`) de propósito — não empilhe
-  frameworks de agentes, pois cada um adiciona muitas ferramentas ao contexto.
+- **Runner padronizado:** tudo via `bunx` (Bun). O único binário fora desse
+  padrão é o `ruff` (Rust, sem pacote npm — roda direto, não via `bunx`).
+- **Um só orquestrador:** `oh-my-opencode-slim`. Não empilhe frameworks de
+  agentes — cada um adiciona muitas ferramentas ao contexto.
+- **Memória sem credenciais:** `opencode-mem` é local (SQLite + embeddings
+  locais); nada sai da máquina.
+- MCPs e LSPs consomem contexto/tokens — mantenha ativos só os necessários
+  por projeto.
