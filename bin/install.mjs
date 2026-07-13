@@ -1,4 +1,4 @@
-#!/usr/bin/env -S bun run
+#!/usr/bin/env node
 // EitaTI — OpenCode global config installer (cross-platform).
 // Run via:  npx github:EitaTI/opencode-config
 //            bunx github:EitaTI/opencode-config
