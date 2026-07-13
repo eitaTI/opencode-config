@@ -1,6 +1,6 @@
 ---
 name: conventional-commits
-description: Write Conventional Commits and well-scoped commit messages for TS/JS and Python changes
+description: Write Conventional Commits and well-scoped commit messages for TS/JS and Python changes. Use when staging/committing changes or opening a PR.
 license: MIT
 compatibility: opencode
 metadata:

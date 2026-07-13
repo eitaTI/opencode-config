@@ -1,6 +1,6 @@
 ---
 name: git-release
-description: Create consistent releases and changelogs from merged PRs and git history
+description: Create consistent releases and changelogs from merged PRs and git history. Use when preparing a tagged release (tag + GitHub Release).
 license: MIT
 compatibility: opencode
 metadata:

@@ -1,6 +1,6 @@
 ---
 name: explain-code
-description: Explain a code file, module, or function clearly for TS/JS and Python, including data flow and side effects
+description: Explain a code file, module, or function clearly for TS/JS and Python, including data flow and side effects. Use when onboarding, reviewing unfamiliar code, or writing a PR description.
 license: MIT
 compatibility: opencode
 metadata:

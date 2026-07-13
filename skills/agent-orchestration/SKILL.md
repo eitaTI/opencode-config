@@ -1,6 +1,6 @@
 ---
 name: agent-orchestration
-description: Decide when to delegate work to the oh-my-opencode-slim multi-agent orchestrator versus working directly in the current session
+description: Decide when to delegate work to the oh-my-opencode-slim multi-agent orchestrator versus working directly in the current session. Use when a task is large or multi-shaped (scaffolding, mixed models, parallel sub-tasks) rather than a small single-file edit.
 license: MIT
 compatibility: opencode
 metadata:

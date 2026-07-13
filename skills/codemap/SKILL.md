@@ -37,7 +37,9 @@ If neither file exists: Continue to Step 2 (Initialize).
      - Docs: `docs/**`, `*.md` (except root `README.md` if needed), `LICENSE`
      - Build/Deps: `node_modules/**`, `dist/**`, `build/**`, `*.min.js`
    - Respect `.gitignore` automatically
-3. **Run codemap.mjs init**:
+3. **Run codemap.mjs init** (the path below assumes Linux/macOS; on Windows
+   the global config dir is `%LOCALAPPDATA%\opencode`, so use
+   `%LOCALAPPDATA%\opencode\skills\codemap\scripts\codemap.mjs`):
 
 ```bash
 node ~/.config/opencode/skills/codemap/scripts/codemap.mjs init \
