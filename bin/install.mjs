@@ -103,8 +103,9 @@ function checkPrerequisites() {
 }
 
 function printPrerequisiteHelp(missing) {
+  const osLabel = isWin ? "Windows" : "macOS / Linux";
   console.log(`
-Missing required tool(s). The installed config depends on them:
+Missing required tool(s) (detected OS: ${osLabel}). The installed config depends on them:
 `);
   for (const p of missing) {
     const cmd = isWin ? p.win : p.unix;
