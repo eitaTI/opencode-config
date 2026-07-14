@@ -10,7 +10,9 @@
     "bin",
     "opencode.jsonc",
     "skills",
-    "docs"
+    "docs",
+    "AGENTS.md",
+    "CONTRIBUTING.md"
   ],
   "license": "MIT",
   "engines": {

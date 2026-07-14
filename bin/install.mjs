@@ -127,18 +127,17 @@ function checkPrerequisites() {
 }
 
 function printPrerequisiteHelp(missing) {
-  const osLabel = isWin ? "Windows" : isArchBased() ? "Arch-based Linux (CachyOS, EndeavourOS, etc.)" : "macOS / Linux (Debian/Ubuntu)";
+  const osLabel = isWin ? "Windows" : isArchBased() ? "Arch-based Linux" : "macOS / Linux";
   console.log(`
-Missing required tool(s) (detected OS: ${osLabel}). The installed config depends on them:
+Missing required tool(s) (${osLabel}):
 `);
   for (const p of missing) {
     const cmd = isWin ? p.win : p.unix;
-    console.log(`  • ${p.name} — ${p.note}`);
-    console.log(`      ${cmd}`);
+    console.log(`  ${p.name} — ${p.note}`);
+    console.log(`    ${cmd}`);
   }
   console.log(`
 Install the above, then re-run:
-
   npx github:EitaTI/opencode-config
 `);
 }
@@ -154,16 +153,13 @@ Usage:
   npx github:EitaTI/opencode-config [--dry-run]
 
 Options:
-  --dry-run     Print what would happen without writing files (still
-                reports missing prerequisites).
+  --dry-run     Preview what would happen without writing files.
   -h, --help    Show this help.
 
 What it does:
-  1. Checks that Node.js, uv and ruff are installed (prints install
-     commands for any that are missing, then stops).
-  2. Copies opencode.jsonc, skills/ and docs/ into the OpenCode
-     global config dir (~/.config/opencode on Linux, etc.).
-  3. Installs the Superpowers multi-agent orchestrator via git-backed plugin.
+  1. Checks for required tools (Node.js, uv, ruff).
+  2. Copies config files to OpenCode global config dir.
+  3. Installs Superpowers orchestrator via plugin system.
 `);
 }
 
@@ -186,15 +182,15 @@ function main() {
   }
 
   const target = resolveTargetDir();
-  log(`Target OpenCode config dir: ${target}`);
+  log(`Installing to: ${target}`);
 
   for (const item of SOURCE_ITEMS) {
     const src = path.join(REPO_ROOT, item);
-    if (!fs.existsSync(src)) { warn(`source missing: ${item} (skipped)`); continue; }
+    if (!fs.existsSync(src)) continue;
     const dest = path.join(target, item);
-    if (dry) { log(`[dry-run] would copy ${src} -> ${dest}`); continue; }
+    if (dry) { log(`[dry-run] would copy ${item}`); continue; }
     copyRecursive(src, dest);
-    log(`Copied ${item} -> ${target}`);
+    log(`Copied ${item}`);
   }
 
   if (dry) {
@@ -205,7 +201,7 @@ function main() {
   log("Superpowers orchestrator will be installed by OpenCode via plugin system");
 
   console.log(`
-Done. Config installed into:
+Done! Config installed to:
   ${target}
 
 Verify with:
