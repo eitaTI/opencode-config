@@ -90,6 +90,57 @@ function copyRecursive(src, dest) {
   }
 }
 
+function rmrf(target) {
+  if (fs.existsSync(target)) {
+    fs.rmSync(target, { recursive: true, force: true });
+    return true;
+  }
+  return false;
+}
+
+function cleanTarget(target, dry) {
+  const runtimeFiles = ["opencode-mem.jsonc", "dcp.jsonc", "smart-title.jsonc"];
+  const systemFiles = ["package.json", "package-lock.json"];
+  const systemDir = "node_modules";
+
+  const toRemove = [];
+
+  // Config files from repo (will be re-copied)
+  for (const item of SOURCE_ITEMS) {
+    const p = path.join(target, item);
+    if (fs.existsSync(p)) toRemove.push(p);
+  }
+
+  // Plugin runtime files
+  for (const f of runtimeFiles) {
+    const p = path.join(target, f);
+    if (fs.existsSync(p)) toRemove.push(p);
+  }
+
+  // Plugin system files
+  for (const f of systemFiles) {
+    const p = path.join(target, f);
+    if (fs.existsSync(p)) toRemove.push(p);
+  }
+  const nmDir = path.join(target, systemDir);
+  if (fs.existsSync(nmDir)) toRemove.push(nmDir);
+
+  if (toRemove.length === 0) {
+    log("Nothing to clean (target is already empty)");
+    return;
+  }
+
+  if (dry) {
+    for (const p of toRemove) log(`[dry-run] would remove ${path.relative(target, p)}`);
+    return;
+  }
+
+  for (const p of toRemove) {
+    rmrf(p);
+    log(`Removed ${path.relative(target, p)}`);
+  }
+}
+
 // ---------------------------------------------------------------------------
 // prerequisite checks (no auto-install — keeps the installer simple)
 // ---------------------------------------------------------------------------
@@ -150,16 +201,23 @@ function printHelp() {
 EitaTI — OpenCode global config installer
 
 Usage:
-  npx github:EitaTI/opencode-config [--dry-run]
+  npx github:EitaTI/opencode-config [--dry-run] [--clean]
 
 Options:
   --dry-run     Preview what would happen without writing files.
+  --clean       Remove ALL config files (no reinstall).
   -h, --help    Show this help.
 
 What it does:
   1. Checks for required tools (Node.js, uv, ruff).
   2. Copies config files to OpenCode global config dir.
   3. Installs Superpowers orchestrator via plugin system.
+
+  With --clean, removes everything without reinstalling:
+  - Config files (opencode.jsonc, skills/, docs/, AGENTS.md, CONTRIBUTING.md)
+  - Plugin runtime files (opencode-mem.jsonc, dcp.jsonc, smart-title.jsonc)
+  - Plugin system files (package.json, package-lock.json, node_modules/)
+  To reinstall after cleaning, run the command without --clean.
 `);
 }
 
@@ -167,6 +225,7 @@ function main() {
   const args = process.argv.slice(2);
   if (args.includes("-h") || args.includes("--help")) return printHelp();
   const dry = args.includes("--dry-run");
+  const clean = args.includes("--clean");
 
   // Prerequisite check — Node.js/uv/ruff must already be installed.
   const missing = checkPrerequisites();
@@ -183,6 +242,22 @@ function main() {
 
   const target = resolveTargetDir();
   log(`Installing to: ${target}`);
+
+  if (clean) {
+    cleanTarget(target, dry);
+    if (dry) {
+      log("[dry-run] Done.");
+    } else {
+      console.log(`
+Clean complete! Removed all config from:
+  ${target}
+
+To reinstall, run:
+  npx github:EitaTI/opencode-config
+`);
+    }
+    return;
+  }
 
   for (const item of SOURCE_ITEMS) {
     const src = path.join(REPO_ROOT, item);
