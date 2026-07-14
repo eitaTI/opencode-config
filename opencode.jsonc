@@ -154,13 +154,11 @@
   },
 
   "plugin": [
-    "opencode-notify",
     "opencode-websearch-cited",
     "@tarquinen/opencode-dcp",
     "opencode-mem",
     "opencode-wakatime",
     "opencode-pty",
-    "opencode-snip",
     "envsitter-guard",
     "opencode-smart-title",
     "superpowers@git+https://github.com/obra/superpowers.git"

@@ -51,7 +51,7 @@ Detalhes, motivação e configuração extra de cada item estão em `docs/`:
 |-----------|----------|---------|
 | **LSP** | [docs/lsp.md](docs/lsp.md) | 19 language servers: `basedpyright`, `ruff`, `vtsls`, `eslint-lsp`, `tailwindcss`, `emmet`, `bash`, `docker`, `yaml`, `json`, `html`, `css`, `markdown`, `ansible` |
 | **MCP** | [docs/mcp.md](docs/mcp.md) | `context7`, `gh_grep`, `fetch`, `sequentialthinking`, `git`, `filesystem`, `memory`, `sqlite` (ativos); `playwright`/`brave-search` (opcionais) |
-| **Plugins** | [docs/plugins.md](docs/plugins.md) | 10 plugins: `Superpowers`, `opencode-mem`, `opencode-notify`, `@tarquinen/opencode-dcp`, `opencode-wakatime`, `opencode-pty`, `opencode-snip`, `envsitter-guard`, `opencode-smart-title`, etc. |
+| **Plugins** | [docs/plugins.md](docs/plugins.md) | 8 plugins: `Superpowers`, `opencode-mem`, `@tarquinen/opencode-dcp`, `opencode-wakatime`, `opencode-pty`, `envsitter-guard`, `opencode-smart-title`, etc. |
 
 - **Skills** globais em `skills/`: `git-release`, `conventional-commits`,
   `explain-code`, `agent-orchestration`, `superpowers`, `codemap`,
@@ -63,15 +63,69 @@ O instalador **não** instala essas ferramentas — ele confere se estão
 presentes e, se faltar alguma, mostra o comando de instalação e pede
 para você instalar e rodar de novo.
 
-- **Node.js** — runner para os MCP servers via `npx` + `Superpowers`.
-  Windows: `powershell -c "winget install OpenJS.NodeJS.LTS"`
-  macOS/Linux: `curl -fsSL https://deb.nodesource.com/setup_lts.x | sudo -E bash - && sudo apt-get install -y nodejs`
-- **uv** — roda o servidor MCP `fetch` (Python oficial) via `uvx`.
-  Windows: `powershell -c "irm https://astral.sh/uv/install.ps1 | iex"`
-  macOS/Linux: `curl -LsSf https://astral.sh/uv/install.sh | sh`
-- **ruff** — LSP/formatter Python usado pela config.
-  Windows: `powershell -c "irm https://astral.sh/ruff/install.ps1 | iex"`
-  macOS/Linux: `curl -LsSf https://astral.sh/ruff/install.sh | sh`
+### Pop!_OS / Ubuntu / Debian
+
+```bash
+# Node.js LTS (via NodeSource)
+curl -fsSL https://deb.nodesource.com/setup_lts.x | sudo -E bash -
+sudo apt-get install -y nodejs
+
+# uv (Python MCP server)
+curl -LsSf https://astral.sh/uv/install.sh | sh
+
+# ruff (Python LSP + formatter)
+curl -LsSf https://astral.sh/ruff/install.sh | sh
+```
+
+### CachyOS / Arch Linux / EndeavourOS
+
+O `install.sh` usa `apt-get` (Debian/Ubuntu). Para Arch-based distros,
+use o instalador cross-platform (`bin/install.mjs`) que detecta o SO
+automaticamente:
+
+```bash
+# Pré-requisitos via pacman
+sudo pacman -S nodejs npm
+
+# Instalação do OpenCode config
+npx -y github:EitaTI/opencode-config
+```
+
+Ou instale manualmente os pré-requisitos restantes:
+```bash
+# uv (Python MCP server)
+curl -LsSf https://astral.sh/uv/install.sh | sh
+
+# ruff (Python LSP + formatter)
+curl -LsSf https://astral.sh/ruff/install.sh | sh
+```
+
+### Windows
+
+```powershell
+# Node.js LTS
+powershell -c "winget install OpenJS.NodeJS.LTS"
+
+# uv
+powershell -c "irm https://astral.sh/uv/install.ps1 | iex"
+
+# ruff
+powershell -c "irm https://astral.sh/ruff/install.ps1 | iex"
+```
+
+### macOS
+
+```bash
+# Node.js LTS (via Homebrew)
+brew install node
+
+# uv
+curl -LsSf https://astral.sh/uv/install.sh | sh
+
+# ruff
+curl -LsSf https://astral.sh/ruff/install.sh | sh
+```
+
 - **`BRAVE_API_KEY`** — só se for ativar `brave-search`.
 
 ## Estrutura

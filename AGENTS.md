@@ -48,9 +48,9 @@ OpenCode config directory.
 
 ## Plugins (defined in `opencode.jsonc`)
 
-10 plugins: `Superpowers`, `opencode-mem`, `opencode-notify`,
+8 plugins: `Superpowers`, `opencode-mem`,
 `@tarquinen/opencode-dcp`, `opencode-websearch-cited`,
-`opencode-wakatime`, `opencode-pty`, `opencode-snip`,
+`opencode-wakatime`, `opencode-pty`,
 `envsitter-guard`, `opencode-smart-title`.
 
 ## Conventions

@@ -27,6 +27,16 @@ const isWin = process.platform === "win32";
 const log = (...a) => console.log("==>", ...a);
 const warn = (...a) => console.warn("  (warn)", ...a);
 
+function isArchBased() {
+  if (process.platform !== "linux") return false;
+  try {
+    const pacmanCheck = spawnSync("which", ["pacman"], { stdio: "pipe" });
+    return pacmanCheck.status === 0;
+  } catch {
+    return false;
+  }
+}
+
 function resolveTargetDir() {
   if (process.env.OPENCODE_CONFIG_DIR) return process.env.OPENCODE_CONFIG_DIR;
   if (process.env.OPENCODE_CONFIG) return path.dirname(process.env.OPENCODE_CONFIG);
@@ -86,12 +96,18 @@ function copyRecursive(src, dest) {
 // ---------------------------------------------------------------------------
 // Tools the installed config depends on. The installer only checks for them
 // and prints install instructions when any are missing; it never installs.
+function getNodeInstallCmd() {
+  if (isWin) return 'powershell -c "winget install OpenJS.NodeJS.LTS"';
+  if (isArchBased()) return "sudo pacman -S nodejs npm";
+  return "curl -fsSL https://deb.nodesource.com/setup_lts.x | sudo -E bash - && sudo apt-get install -y nodejs";
+}
+
 const PREREQS = [
   {
     name: "node",
     note: "JavaScript runtime for npx-based MCP servers + LSP + Superpowers",
-    win: 'powershell -c "winget install OpenJS.NodeJS.LTS"',
-    unix: "curl -fsSL https://deb.nodesource.com/setup_lts.x | sudo -E bash - && sudo apt-get install -y nodejs",
+    get win() { return 'powershell -c "winget install OpenJS.NodeJS.LTS"'; },
+    get unix() { return getNodeInstallCmd(); },
   },
   {
     name: "uv",
@@ -112,7 +128,7 @@ function checkPrerequisites() {
 }
 
 function printPrerequisiteHelp(missing) {
-  const osLabel = isWin ? "Windows" : "macOS / Linux";
+  const osLabel = isWin ? "Windows" : isArchBased() ? "Arch-based Linux (CachyOS, EndeavourOS, etc.)" : "macOS / Linux (Debian/Ubuntu)";
   console.log(`
 Missing required tool(s) (detected OS: ${osLabel}). The installed config depends on them:
 `);
