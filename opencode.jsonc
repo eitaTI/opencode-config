@@ -165,7 +165,7 @@
   ],
 
   "instructions": [
-    "AGENTS.md",
-    "CONTRIBUTING.md"
+    "~/.config/opencode/AGENTS.md",
+    "~/.config/opencode/CONTRIBUTING.md"
   ]
 }

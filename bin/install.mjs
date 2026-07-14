@@ -17,8 +17,7 @@ import { fileURLToPath } from "node:url";
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const REPO_ROOT = path.resolve(__dirname, "..");
 
-const SOURCE_ITEMS = ["opencode.jsonc", "skills", "docs"];
-const ENV_LINE = "export OPENCODE_EXPERIMENTAL_LSP_TOOL=true";
+const SOURCE_ITEMS = ["opencode.jsonc", "skills", "docs", "AGENTS.md", "CONTRIBUTING.md"];
 
 // ---------------------------------------------------------------------------
 // helpers
@@ -144,22 +143,6 @@ Install the above, then re-run:
 `);
 }
 
-function setEnvVar() {
-  log("Enabling experimental LSP tool flag...");
-  if (isWin) {
-    // Persistent user env var on Windows.
-    run("setx", ["OPENCODE_EXPERIMENTAL_LSP_TOOL", "true"]);
-    return;
-  }
-  for (const rc of [path.join(os.homedir(), ".bashrc"), path.join(os.homedir(), ".zshrc"), path.join(os.homedir(), ".profile")]) {
-    if (!fs.existsSync(rc)) continue;
-    const txt = fs.readFileSync(rc, "utf8");
-    if (txt.includes("OPENCODE_EXPERIMENTAL_LSP_TOOL")) continue;
-    fs.appendFileSync(rc, `\n# >>> opencode-config >>>\n${ENV_LINE}\n# <<< opencode-config <<<\n`);
-    log(`Added ${ENV_LINE} to ${rc}`);
-  }
-}
-
 // ---------------------------------------------------------------------------
 // main
 // ---------------------------------------------------------------------------
@@ -181,8 +164,6 @@ What it does:
   2. Copies opencode.jsonc, skills/ and docs/ into the OpenCode
      global config dir (~/.config/opencode on Linux, etc.).
   3. Installs the Superpowers multi-agent orchestrator via git-backed plugin.
-  4. Enables the experimental LSP tool flag
-     (OPENCODE_EXPERIMENTAL_LSP_TOOL).
 `);
 }
 
@@ -217,12 +198,11 @@ function main() {
   }
 
   if (dry) {
-    log("[dry-run] would set env var. Done.");
+    log("[dry-run] Done.");
     return;
   }
 
   log("Superpowers orchestrator will be installed by OpenCode via plugin system");
-  setEnvVar();
 
   console.log(`
 Done. Config installed into:

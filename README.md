@@ -21,7 +21,7 @@ npx -y github:EitaTI/opencode-config
 > $env:Path = [System.Environment]::GetEnvironmentVariable("Path","Machine") + ";" + [System.Environment]::GetEnvironmentVariable("Path","User")
 > ```
 
-Esse comando (1) copia `opencode.jsonc`, `skills/` e `docs/` para o
+Esse comando (1) copia `opencode.jsonc`, `skills/`, `docs/`, `AGENTS.md` e `CONTRIBUTING.md` para o
 diretório global do OpenCode, (2) confere os pré-requisitos **Node.js**, **uv** e
 **ruff** (mostra o comando de instalação de cada um se faltar) e (3)
 materializa o orquestrador `Superpowers` e habilita a flag

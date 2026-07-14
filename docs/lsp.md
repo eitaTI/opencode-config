@@ -28,11 +28,6 @@ servidor se precisar (ex.: `"pyright": { "disabled": true }`).
   desativado para evitar diagnósticos duplicados.
 - **Config extra:** nenhuma — instalado sob demanda pelo `npx`.
 
-> **Ferramenta LSP experimental:** o OpenCode expõe ferramentas baseadas em
-> LSP quando a env `OPENCODE_EXPERIMENTAL_LSP_TOOL=true` está definida.
-> O `install.sh` exporta essa var no rc do shell (`~/.bashrc`/`~/.zshrc`)
-> de forma idempotente. Para checar: `echo $OPENCODE_EXPERIMENTAL_LSP_TOOL`.
-
 ## Python
 
 ### `ruff server` (já existente)

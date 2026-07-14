@@ -32,26 +32,14 @@ mkdir -p "$DEST"
 
 ln -sfn "$SRC/opencode.jsonc" "$DEST/opencode.jsonc"
 ln -sfn "$SRC/skills" "$DEST/skills"
+ln -sfn "$SRC/docs" "$DEST/docs"
+ln -sfn "$SRC/AGENTS.md" "$DEST/AGENTS.md"
+ln -sfn "$SRC/CONTRIBUTING.md" "$DEST/CONTRIBUTING.md"
 
 # --- Multi-agent orchestrator (Superpowers) ---
 # Superpowers is installed via git-backed plugin install in opencode.jsonc.
 # No additional installation step needed - OpenCode handles it automatically.
 echo "==> Superpowers orchestrator will be installed by OpenCode via plugin system"
-
-# --- Experimental LSP tool (OPENCODE_EXPERIMENTAL_LSP_TOOL) ---
-# OpenCode reads this env var at startup to enable experimental LSP-based
-# tools. Export it into the shell rc so it persists for OpenCode launches.
-# Guarded so re-running install.sh never duplicates the line.
-EXP_LINE='export OPENCODE_EXPERIMENTAL_LSP_TOOL=true'
-for rc in "$HOME/.bashrc" "$HOME/.zshrc" "$HOME/.profile"; do
-	if [ -f "$rc" ] && ! grep -qF "OPENCODE_EXPERIMENTAL_LSP_TOOL" "$rc"; then
-		echo "" >>"$rc"
-		echo "# >>> opencode-config >>>" >>"$rc"
-		echo "$EXP_LINE" >>"$rc"
-		echo "# <<< opencode-config <<<" >>"$rc"
-		echo "==> Added $EXP_LINE to $rc"
-	fi
-done
 
 echo
 echo "Linked OpenCode config -> $DEST"
