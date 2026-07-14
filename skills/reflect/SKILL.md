@@ -20,7 +20,7 @@ Use Reflect when the user asks to:
 - run `/reflect --sessions` for session archaeology;
 - learn from recent sessions or repeated workflows;
 - find work they keep doing manually;
-- improve their oh-my-openagent setup based on actual usage using oh-my-openagent skill;
+- improve their Superpowers setup based on actual usage using Superpowers skill;
 - review whether a recurring process should become a reusable playbook;
 - turn repeated workflow friction into a safer future default.
 
@@ -60,7 +60,7 @@ For each session, analyze and produce a structured summary:
 ```json
 {
   "session": "ses_14de9c68effegtZtlATm42wnz7",
-  "project": "/home/user/Projects/oh-my-openagent",
+  "project": "/home/user/Projects/superpowers",
   "timestamp": "2026-06-10T15:08:45.427Z",
   "goal": "Fix CI failure",
   "success": true,
@@ -87,7 +87,7 @@ For each session, analyze and produce a structured summary:
 
 ### Storage and Caching
 
-Store session summaries in `~/.config/opencode/oh-my-openagent/reflections/sessions/`.
+Store session summaries in `~/.config/opencode/superpowers/reflections/sessions/`.
 
 **Cache logic:**
 1. Check if `<session-id>.json` exists in reflections directory
@@ -183,7 +183,7 @@ Use available evidence in this order:
 2. Project-local guidance and memories, such as `AGENTS.md`, `.opencode/`,
    `.slim/`, notes, checkpoints, task progress files, and codemaps.
 3. Existing skills, commands, agents, prompt overrides, MCP permissions, and
-   oh-my-openagent configuration.
+   Superpowers configuration.
 4. Recent OpenCode logs or session artifacts if they are available and safe to
    inspect.
 5. External docs only when a proposed workflow depends on a third-party tool or
@@ -216,7 +216,7 @@ Before proposing anything, identify what already exists:
 - custom agents and their `orchestratorPrompt` guidance;
 - custom commands;
 - prompt overrides and append files;
-- active oh-my-openagent preset, model routing, skills, and MCP permissions;
+- active Superpowers preset, model routing, skills, and MCP permissions;
 - project playbooks, docs, codemaps, and local workflow notes.
 
 If an existing asset already covers the candidate, recommend extending or using

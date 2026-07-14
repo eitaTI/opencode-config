@@ -2,10 +2,11 @@
 // EitaTI — OpenCode global config installer (cross-platform).
 // Run via:  npx github:EitaTI/opencode-config
 // Works on Windows, macOS and Linux. Copies opencode.jsonc, skills/
-// and docs/ into the OpenCode global config dir, and materializes the
-// oh-my-openagent orchestrator. Requires Node.js/npm + uv (and ruff for the
-// Python LSP) to be installed beforehand — it checks for them and prints
-// install instructions for any that are missing, then asks you to re-run.
+// and docs/ into the OpenCode global config dir, and installs the
+// Superpowers orchestrator via git-backed plugin. Requires Node.js/npm + uv
+// (and ruff for the Python LSP) to be installed beforehand — it checks for
+// them and prints install instructions for any that are missing, then asks
+// you to re-run.
 
 import fs from "node:fs";
 import path from "node:path";
@@ -57,8 +58,8 @@ function run(cmd, args, opts = {}) {
   const full = isWin ? `${cmd}.exe` : cmd;
   // spawnSync searches PATH on every platform and passes `args` safely
   // (execSync ignores an `args` option, which silently dropped every
-  // argument — e.g. setx / oh-my-openagent). Throws on failure
-  // so callers can catch non-fatal steps (e.g. oh-my-openagent).
+  // argument — e.g. setx). Throws on failure
+  // so callers can catch non-fatal steps.
   const r = spawnSync(full, args, { stdio: "inherit", ...opts });
   if (r.error) throw r.error;
   if (r.status !== 0 && r.status !== null) {
@@ -88,7 +89,7 @@ function copyRecursive(src, dest) {
 const PREREQS = [
   {
     name: "node",
-    note: "JavaScript runtime for npx-based MCP servers + LSP + oh-my-openagent",
+    note: "JavaScript runtime for npx-based MCP servers + LSP + Superpowers",
     win: 'powershell -c "winget install OpenJS.NodeJS.LTS"',
     unix: "curl -fsSL https://deb.nodesource.com/setup_lts.x | sudo -E bash - && sudo apt-get install -y nodejs",
   },
@@ -163,7 +164,7 @@ What it does:
      commands for any that are missing, then stops).
   2. Copies opencode.jsonc, skills/ and docs/ into the OpenCode
      global config dir (~/.config/opencode on Linux, etc.).
-  3. Materializes the oh-my-openagent multi-agent orchestrator.
+  3. Installs the Superpowers multi-agent orchestrator via git-backed plugin.
   4. Enables the experimental LSP tool flag
      (OPENCODE_EXPERIMENTAL_LSP_TOOL).
 `);
@@ -200,17 +201,11 @@ function main() {
   }
 
   if (dry) {
-    log("[dry-run] would run oh-my-openagent and set env var. Done.");
+    log("[dry-run] would set env var. Done.");
     return;
   }
 
-  log("Setting up oh-my-openagent (multi-agent orchestrator)...");
-  try {
-    run("npx", ["-y", "oh-my-openagent@latest", "install"]);
-  } catch {
-    warn("oh-my-openagent install failed; run manually: npx -y oh-my-openagent@latest install");
-  }
-
+  log("Superpowers orchestrator will be installed by OpenCode via plugin system");
   setEnvVar();
 
   console.log(`

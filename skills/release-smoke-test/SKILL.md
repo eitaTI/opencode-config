@@ -1,11 +1,11 @@
 ---
 name: release-smoke-test
-description: Test an oh-my-openagent release candidate or bugfix before publishing. Use when validating a packed plugin artifact, release branch, crash fix, OpenCode runtime compatibility, or model-specific smoke test such as OpenCode 1.17.11 message transform regressions.
+description: Test a Superpowers release candidate or bugfix before publishing. Use when validating a packed plugin artifact, release branch, crash fix, OpenCode runtime compatibility, or model-specific smoke test such as OpenCode 1.17.11 message transform regressions.
 ---
 
 # Release Smoke Test
 
-Use this skill to validate an `oh-my-openagent` release candidate before
+Use this skill to validate a `Superpowers` release candidate before
 public npm publish. Test the packed artifact, not `@latest` and not the source
 tree.
 
@@ -29,7 +29,7 @@ Use a temp directory so release validation never depends on the local package
 cache.
 
 ```bash
-SMOKE=/tmp/oh-my-openagent-release-smoke
+SMOKE=/tmp/superpowers-release-smoke
 rm -rf "$SMOKE"
 mkdir -p "$SMOKE/pkg" "$SMOKE/app" "$SMOKE/home" "$SMOKE/xdg/opencode" "$SMOKE/run"
 
@@ -42,8 +42,8 @@ Install the tarball:
 ```bash
 cd "$SMOKE/app"
 bun init -y
-bun add "$SMOKE/pkg"/oh-my-openagent-*.tgz
-node -p "require('./node_modules/oh-my-openagent/package.json').version"
+bun add "$SMOKE/pkg"/superpowers-*.tgz
+node -p "require('./node_modules/superpowers/package.json').version"
 ```
 
 ## Isolated Config
@@ -55,7 +55,7 @@ cat > "$SMOKE/xdg/opencode/opencode.json" <<EOF
 {
   "model": "opencode/deepseek-v4-flash-free",
   "plugin": [
-    "file://$SMOKE/app/node_modules/oh-my-openagent/dist/index.js"
+    "file://$SMOKE/app/node_modules/superpowers/dist/index.js"
   ],
   "agent": {
     "orchestrator": {
@@ -121,7 +121,7 @@ cat > "$SMOKE/config/opencode.json" <<EOF
 {
   "model": "openai/gpt-5.6-fast",
   "plugin": [
-    "file://$SMOKE/app/node_modules/oh-my-openagent/dist/index.js"
+    "file://$SMOKE/app/node_modules/superpowers/dist/index.js"
   ],
   "agent": {
     "orchestrator": {
@@ -130,10 +130,6 @@ cat > "$SMOKE/config/opencode.json" <<EOF
   }
 }
 EOF
-
-OPENCODE_CONFIG_DIR="$SMOKE/config" \
-  timeout 120 \
-  opencode run --print-logs --log-level DEBUG "Say OK only."
 ```
 
 Report this as a host-provider smoke because existing project, user, or Orca

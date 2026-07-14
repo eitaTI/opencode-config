@@ -157,17 +157,13 @@
     "opencode-notify",
     "opencode-websearch-cited",
     "@tarquinen/opencode-dcp",
-    // Memory: local-first, no API key (SQLite + vector index, local embeddings).
     "opencode-mem",
-    // Multi-agent orchestrator (11 agents, Team Mode, ultrawork).
-    // Materialized by `npx -y oh-my-openagent@latest install` in install.sh.
-    "oh-my-openagent",
-    // User's global plugins.
     "opencode-wakatime",
     "opencode-pty",
     "opencode-snip",
     "envsitter-guard",
-    "opencode-smart-title"
+    "opencode-smart-title",
+    "superpowers@git+https://github.com/obra/superpowers.git"
   ],
 
   "instructions": [

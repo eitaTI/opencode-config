@@ -22,7 +22,7 @@ OpenCode config directory.
   and, if any are missing, prints the per-OS install command and exits
   (the user installs them, then re-runs the command).
 - It then copies `opencode.jsonc`, `skills/`, `docs/` into the target
-  dir, materializes `oh-my-openagent`, and sets the
+  dir, installs `Superpowers` via git-backed plugin, and sets the
   `OPENCODE_EXPERIMENTAL_LSP_TOOL` user env var (Windows: `setx`;
   Unix: appends to the shell rc file).
 - Command arguments are passed with **`spawnSync`** — never `execSync`
@@ -48,7 +48,7 @@ OpenCode config directory.
 
 ## Plugins (defined in `opencode.jsonc`)
 
-10 plugins: `oh-my-openagent`, `opencode-mem`, `opencode-notify`,
+10 plugins: `Superpowers`, `opencode-mem`, `opencode-notify`,
 `@tarquinen/opencode-dcp`, `opencode-websearch-cited`,
 `opencode-wakatime`, `opencode-pty`, `opencode-snip`,
 `envsitter-guard`, `opencode-smart-title`.
@@ -64,6 +64,6 @@ OpenCode config directory.
 - `git-release` — cut a release (tag + GitHub Release).
 - `conventional-commits` — commit message format.
 - `simplify` / `explain-code` — code quality and understanding.
-- `oh-my-openagent` — the multi-agent orchestrator this config ships.
+- `superpowers` — the multi-agent orchestrator this config ships.
 - `codemap`, `clonedeps`, `deepwork`, `reflect`, `worktrees`,
   `release-smoke-test`, `agent-orchestration` — see each `SKILL.md`.

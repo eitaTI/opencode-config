@@ -128,7 +128,7 @@ Defines agent personalities and manages their configuration lifecycle.
 ## Design
 Each agent is a prompt + permission set. Config system uses:
 - Default prompts (orchestrator.ts, explorer.ts, etc.)
-- User overrides from ~/.config/opencode/oh-my-openagent.json
+- User overrides from ~/.config/opencode/superpowers.json
 - Permission wildcards for skill/MCP access control
 
 ## Flow
@@ -146,7 +146,7 @@ Each agent is a prompt + permission set. Config system uses:
 Example **Root Codemap (Atlas)**:
 
 ```markdown
-# Repository Atlas: oh-my-openagent
+# Repository Atlas: Superpowers
 
 ## Project Responsibility
 A high-performance, low-latency agent orchestration plugin for OpenCode, focusing on specialized sub-agent delegation and multiplexer-assisted child sessions.
@@ -154,7 +154,7 @@ A high-performance, low-latency agent orchestration plugin for OpenCode, focusin
 ## System Entry Points
 - `src/index.ts`: Plugin initialization and OpenCode integration.
 - `package.json`: Dependency manifest and build scripts.
-- `oh-my-openagent.json`: User configuration schema.
+- `superpowers.json`: User configuration schema.
 
 ## Directory Map (Aggregated)
 | Directory | Responsibility Summary | Detailed Map |

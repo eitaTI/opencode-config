@@ -33,11 +33,10 @@ mkdir -p "$DEST"
 ln -sfn "$SRC/opencode.jsonc" "$DEST/opencode.jsonc"
 ln -sfn "$SRC/skills" "$DEST/skills"
 
-# --- Multi-agent orchestrator (oh-my-openagent) ---
-# Idempotent: materializes its agents/commands into the OpenCode config dir.
-echo "==> Setting up oh-my-openagent (multi-agent orchestrator)..."
-npx -y oh-my-openagent@latest install ||
-	echo "   (warn) oh-my-openagent install step failed; run manually: npx -y oh-my-openagent@latest install"
+# --- Multi-agent orchestrator (Superpowers) ---
+# Superpowers is installed via git-backed plugin install in opencode.jsonc.
+# No additional installation step needed - OpenCode handles it automatically.
+echo "==> Superpowers orchestrator will be installed by OpenCode via plugin system"
 
 # --- Experimental LSP tool (OPENCODE_EXPERIMENTAL_LSP_TOOL) ---
 # OpenCode reads this env var at startup to enable experimental LSP-based

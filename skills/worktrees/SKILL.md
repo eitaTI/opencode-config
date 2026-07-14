@@ -90,21 +90,21 @@ keeps them readable to OpenCode.
 `.gitignore`:
 
 ```gitignore
-# BEGIN oh-my-openagent worktrees
+# BEGIN superpowers worktrees
 .slim/worktrees/
 .slim/worktrees.json
-# END oh-my-openagent worktrees
+# END superpowers worktrees
 ```
 
 `.ignore`:
 
 ```ignore
-# BEGIN oh-my-openagent worktrees
+# BEGIN superpowers worktrees
 !.slim/
 !.slim/worktrees.json
 !.slim/worktrees/
 !.slim/worktrees/**
-# END oh-my-openagent worktrees
+# END superpowers worktrees
 ```
 
 ---
