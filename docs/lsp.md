@@ -13,7 +13,8 @@ servidor se precisar (ex.: `"pyright": { "disabled": true }`).
 
 | LSP | Linguagem | Motivação | Config extra |
 |-----|-----------|-----------|--------------|
-| `typescript` / `oxlint` | TS/JS | Diagnósticos e lint em tempo real | nenhuma |
+| `typescript` | TS/JS | Diagnósticos e lint em tempo real | nenhuma |
+| `oxlint` | TS/JS | Lint rápido (Rust) | nenhuma |
 | `eslint` | TS/JS | **desativado** — substituído por `eslint-lsp` (abaixo) | — |
 
 > `pyright` (built-in) também está **desativado** — veja `basedpyright`.

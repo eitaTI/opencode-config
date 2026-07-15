@@ -16,7 +16,7 @@ OpenCode config directory.
 
 ## What gets installed
 
-The installer copies to `~/.config/opencode/` (or `%APPDATA%/opencode` on Windows):
+The installer copies to `~/.config/opencode/`:
 
 - `opencode.jsonc` — main config (overwrites)
 - `skills/` — 7 global skills

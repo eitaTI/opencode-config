@@ -23,8 +23,10 @@ to a user's global OpenCode config dir.
 ## Changing the installer (`bin/install.mjs`)
 
 - It runs under **Node** (`#!/usr/bin/env node`), not Bun.
-- It **checks** for Node.js/uv/ruff/rtk and prints install commands if any
-  are missing — it does **not** auto-install them.
+- It **checks** for Node.js/uv/ruff (required) and rtk (optional), and prints
+  install commands if any are missing — it does **not** auto-install them.
+- Use `--force` to skip the overwrite confirmation prompt.
+- Use `--clean` to remove all config files without reinstalling.
 - Pass command arguments with **`spawnSync`**. `execSync(full, { args })`
   silently drops `args` and breaks `setx` / `npx` calls.
 

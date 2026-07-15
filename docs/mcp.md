@@ -15,8 +15,6 @@ apenas os necessários por projeto.
 | `fetch` | local | `uvx mcp-server-fetch` | Recupera conteúdo de URLs para o agente ler páginas/docs | nenhuma |
 | `sequentialthinking` | local | `npx -y @modelcontextprotocol/server-sequential-thinking` | Ferramenta de raciocínio passo-a-passo para problemas complexos | nenhuma |
 | `git` | local | `npx -y @cyanheads/git-mcp-server` | Operações Git versionadas via MCP (alternativa node ao `mcp-server-git` do Python) | nenhuma |
-| `filesystem` | local | `npx -y @modelcontextprotocol/server-filesystem` | Acesso ao sistema de arquivos para ler/escrever arquivos | Configure os caminhos permitidos no `command` |
-| `memory` | local | `npx -y @modelcontextprotocol/server-memory` | Grafo de conhecimento persistente para memória de longo prazo | nenhuma |
 | `sqlite` | local | `npx -y @mokei/mcp-sqlite --db :memory:` | Consulta/gera bancos SQLite via MCP | nenhuma (default em memória; para um arquivo, copie a entrada com `--db /caminho.db`) |
 
 ## Opcionais — desativados por padrão
