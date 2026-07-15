@@ -3,10 +3,68 @@
 
   "autoupdate": true,
 
+  // Granular permission rules — last matching rule wins.
+  // "allow" = auto-approve, "ask" = prompt user, "deny" = block.
+  "permission": {
+    "edit": "allow",
+    "write": "allow",
+    "read": "allow",
+    "glob": "allow",
+    "grep": "allow",
+    "bash": {
+      "*": "ask",
+      // Safe read-only commands
+      "git status*": "allow",
+      "git diff*": "allow",
+      "git log*": "allow",
+      "git branch*": "allow",
+      "git show*": "allow",
+      "ls *": "allow",
+      "cat *": "allow",
+      "head *": "allow",
+      "tail *": "allow",
+      "find *": "allow",
+      "grep *": "allow",
+      "rg *": "allow",
+      "fd *": "allow",
+      "eza *": "allow",
+      "bat *": "allow",
+      "node -e *": "allow",
+      "npx -y *": "allow",
+      "python -c *": "allow",
+      "python3 -c *": "allow",
+      "uvx *": "allow",
+      "opencode *": "allow",
+      // Destructive commands require approval
+      "rm *": "ask",
+      "rmdir *": "ask",
+      "del *": "ask",
+      "git push*": "ask",
+      "git commit*": "ask",
+      "git reset*": "ask",
+      "git clean*": "ask",
+      "git checkout*": "ask",
+      "git switch*": "ask",
+      "git merge*": "ask",
+      "git rebase*": "ask",
+      "npm install*": "ask",
+      "npm uninstall*": "ask",
+      "yarn *": "ask",
+      "pnpm *": "ask",
+      "bun install*": "ask",
+      "pip install*": "ask",
+      "pip uninstall*": "ask",
+      "uv install*": "ask"
+    },
+    "webfetch": "allow",
+    "websearch": "allow",
+    "question": "allow",
+    "external_directory": "ask"
+  },
+
   // LSP: built-ins auto-install per language (typescript/eslint/oxlint).
   // pyright is disabled in favor of basedpyright (stricter fork, runs via npx).
   // ruff/tailwindcss/emmet are local servers started via npx (single runner).
-  // Docs warn LSP can be memory-heavy; keep an eye on it per project.
   "lsp": {
     "pyright": { "disabled": true },
     "eslint": { "disabled": true }, // replaced by vscode-eslint-language-server below
@@ -52,7 +110,7 @@
       "command": ["docker-langserver", "--stdio"],
       "extensions": ["Dockerfile", ".dockerfile"]
     },
-    // YAML configuration files.
+    // YAML configuration files (general YAML support).
     "yaml-language-server": {
       "command": ["yaml-language-server", "--stdio"],
       "extensions": [".yaml", ".yml"]
@@ -76,12 +134,13 @@
     "vscode-markdown-language-server": {
       "command": ["vscode-markdown-language-server", "--stdio"],
       "extensions": [".md", ".markdown"]
-    },
-    // Ansible playbooks and roles.
-    "ansible-language-server": {
-      "command": ["ansible-language-server", "--stdio"],
-      "extensions": [".yml", ".yaml"]
     }
+    // NOTE: ansible-language-server removed — overlaps with yaml-language-server.
+    // If you need Ansible linting, install ansible-lint as a binary and add back:
+    // "ansible-language-server": {
+    //   "command": ["ansible-language-server", "--stdio"],
+    //   "extensions": [".yml", ".yaml"]
+    // }
   },
 
   // Prettier for TS/JS; ruff handles Python formatting via the LSP above.
@@ -115,17 +174,6 @@
       "type": "local",
       "command": ["npx", "-y", "@cyanheads/git-mcp-server"]
     },
-    // Filesystem access for the agent to read/write files.
-    "filesystem": {
-      "type": "local",
-      "command": ["npx", "-y", "@modelcontextprotocol/server-filesystem", "{env:HOME}"]
-    },
-    // Memory server for persistent knowledge graph.
-    "memory": {
-      "type": "local",
-      "command": ["npx", "-y", "@modelcontextprotocol/server-memory"]
-    },
-
     // SQLite (local): query .db files. Defaults to an in-memory DB;
     // for a real file, copy this entry with "--db", "/path/to/db".
     "sqlite": {
@@ -151,6 +199,8 @@
         "BRAVE_API_KEY": "{env:BRAVE_API_KEY}"
       }
     }
+    // NOTE: filesystem and memory MCPs removed — redundant with OpenCode's
+    // built-in read/write/edit/glob/grep tools and opencode-mem plugin.
   },
 
   "plugin": [
@@ -161,11 +211,10 @@
     "opencode-pty",
     "envsitter-guard",
     "opencode-smart-title",
-    "superpowers@git+https://github.com/obra/superpowers.git"
+    "openslimedit"
   ],
 
   "instructions": [
-    "~/.config/opencode/AGENTS.md",
-    "~/.config/opencode/CONTRIBUTING.md"
+    "~/.config/opencode/AGENTS.md"
   ]
 }

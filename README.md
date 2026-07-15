@@ -21,26 +21,37 @@ npx -y github:EitaTI/opencode-config
 > $env:Path = [System.Environment]::GetEnvironmentVariable("Path","Machine") + ";" + [System.Environment]::GetEnvironmentVariable("Path","User")
 > ```
 
-Esse comando (1) copia `opencode.jsonc`, `skills/`, `docs/`, `AGENTS.md` e `CONTRIBUTING.md` para o
-diretório global do OpenCode, (2) confere os pré-requisitos **Node.js**, **uv** e
-**ruff** (mostra o comando de instalação de cada um se faltar) e (3)
-materializa o orquestrador `Superpowers` e habilita a flag
-experimental de LSP tool. Para ver o que seria feito sem alterar nada:
-`npx github:EitaTI/opencode-config --dry-run`.
+Esse comando (1) copia `opencode.jsonc`, `skills/`, `commands/`, `docs/` e `AGENTS.md` para o
+diretório global do OpenCode (`~/.config/opencode`), (2) confere os pré-requisitos **Node.js**, **uv** e
+**ruff** (mostra o comando de instalação de cada um se faltar), (3) se já existir config, cria backup
+antes de sobrescrever. Opções:
+
+```bash
+npx github:EitaTI/opencode-config --dry-run    # preview sem alterar nada
+npx github:EitaTI/opencode-config --force       # sobrescreve sem perguntar
+npx github:EitaTI/opencode-config --clean       # remove tudo (sem reinstalar)
+```
 
 ## Instalação via clone (dev/contribuição)
+
+> **Nota:** `install.sh` é para **Unix** (Linux/macOS). No Windows, use `bin/install.mjs`.
 
 ```bash
 git clone <repo-url> opencode-config
 cd opencode-config
-bash install.sh
+bash install.sh    # Unix apenas
 ```
 
 O `install.sh` (idempotente) faz:
-1. Instala o **Node.js** e o **ruff** (binário standalone) se ausentes.
-2. Cria symlinks de `opencode.jsonc` e `skills/` em `~/.config/opencode`.
-3. Materializa os agentes do `Superpowers`
-   (via git-backed plugin install).
+1. Detecta a distro (Arch/Debian/Fedora/SUSE) e instala **Node.js** e **ruff** se ausentes.
+2. Instala **uv** e **rtk** se ausentes.
+3. Cria symlinks de `opencode.jsonc`, `skills/`, `commands/`, `docs/` e `AGENTS.md` em `~/.config/opencode`.
+
+No Windows, use o instalador cross-platform:
+```bash
+node bin/install.mjs
+# ou: npx -y github:EitaTI/opencode-config
+```
 
 Verifique: `opencode mcp list` e `opencode debug config`.
 
@@ -49,19 +60,21 @@ Detalhes, motivação e configuração extra de cada item estão em `docs/`:
 
 | Categoria | Arquivo | Resumo |
 |-----------|----------|---------|
-| **LSP** | [docs/lsp.md](docs/lsp.md) | 19 language servers: `basedpyright`, `ruff`, `vtsls`, `eslint-lsp`, `tailwindcss`, `emmet`, `bash`, `docker`, `yaml`, `json`, `html`, `css`, `markdown`, `ansible` |
-| **MCP** | [docs/mcp.md](docs/mcp.md) | `context7`, `gh_grep`, `fetch`, `sequentialthinking`, `git`, `filesystem`, `memory`, `sqlite` (ativos); `playwright`/`brave-search` (opcionais) |
-| **Plugins** | [docs/plugins.md](docs/plugins.md) | 8 plugins: `Superpowers`, `opencode-mem`, `@tarquinen/opencode-dcp`, `opencode-wakatime`, `opencode-pty`, `envsitter-guard`, `opencode-smart-title`, etc. |
+| **LSP** | [docs/lsp.md](docs/lsp.md) | 13 language servers: `basedpyright`, `ruff`, `vtsls`, `eslint-lsp`, `tailwindcss`, `emmet`, `bash`, `docker`, `yaml`, `json`, `html`, `css`, `markdown` |
+| **MCP** | [docs/mcp.md](docs/mcp.md) | `context7`, `gh_grep`, `fetch`, `sequentialthinking`, `git`, `sqlite` (ativos); `playwright`/`brave-search` (opcionais) |
+| **Plugins** | [docs/plugins.md](docs/plugins.md) | 8 plugins: `opencode-mem`, `@tarquinen/opencode-dcp`, `opencode-wakatime`, `opencode-pty`, `envsitter-guard`, `opencode-smart-title`, `openslimedit`, etc. |
 
 - **Skills** globais em `skills/`: `git-release`, `conventional-commits`,
-  `explain-code`, `agent-orchestration`, `superpowers`, `codemap`,
-  `clonedeps`, `deepwork`, `reflect`, `worktrees`, `release-smoke-test`.
+  `explain-code`, `codemap`, `clonedeps`, `worktrees`, `simplify`.
+
+- **Comandos** customizados em `commands/`: `/review`, `/test`, `/fix`, `/explain`, `/clean`, `/commit`.
 
 ## Pré-requisitos
 
-O instalador **não** instala essas ferramentas — ele confere se estão
-presentes e, se faltar alguma, mostra o comando de instalação e pede
-para você instalar e rodar de novo.
+O instalador confere se as ferramentas estão presentes. **Node.js**, **uv** e
+**ruff** são obrigatórios — se faltar alguma, o instalador aborta com o
+comando de instalação. **rtk** é opcional (recomendado) — se faltar, apenas
+avisa e continua.
 
 ### Pop!_OS / Ubuntu / Debian
 
@@ -75,29 +88,26 @@ curl -LsSf https://astral.sh/uv/install.sh | sh
 
 # ruff (Python LSP + formatter)
 curl -LsSf https://astral.sh/ruff/install.sh | sh
+
+# rtk (Rust Token Killer — optional, reduces LLM token consumption by 60-90%)
+curl -fsSL https://rtk-ai.app/install.sh | sh
 ```
 
 ### CachyOS / Arch Linux / EndeavourOS
 
-O `install.sh` usa `apt-get` (Debian/Ubuntu). Para Arch-based distros,
-use o instalador cross-platform (`bin/install.mjs`) que detecta o SO
-automaticamente:
+O `install.sh` detecta automaticamente distros baseadas em Arch (pacman),
+Debian/Ubuntu (apt-get), Fedora (dnf) e SUSE (zypper).
 
 ```bash
-# Pré-requisitos via pacman
-sudo pacman -S nodejs npm
-
-# Instalação do OpenCode config
-npx -y github:EitaTI/opencode-config
+# Instalação via clone
+git clone <repo-url> opencode-config
+cd opencode-config
+bash install.sh
 ```
 
-Ou instale manualmente os pré-requisitos restantes:
+Ou use o instalador cross-platform:
 ```bash
-# uv (Python MCP server)
-curl -LsSf https://astral.sh/uv/install.sh | sh
-
-# ruff (Python LSP + formatter)
-curl -LsSf https://astral.sh/ruff/install.sh | sh
+npx -y github:EitaTI/opencode-config
 ```
 
 ### Windows
@@ -111,6 +121,9 @@ powershell -c "irm https://astral.sh/uv/install.ps1 | iex"
 
 # ruff
 powershell -c "irm https://astral.sh/ruff/install.ps1 | iex"
+
+# rtk (optional — Rust Token Killer)
+powershell -c "irm https://rtk-ai.app/install.ps1 | iex"
 ```
 
 ### macOS
@@ -124,6 +137,9 @@ curl -LsSf https://astral.sh/uv/install.sh | sh
 
 # ruff
 curl -LsSf https://astral.sh/ruff/install.sh | sh
+
+# rtk (optional — Rust Token Killer)
+curl -fsSL https://rtk-ai.app/install.sh | sh
 ```
 
 - **`BRAVE_API_KEY`** — só se for ativar `brave-search`.
@@ -131,19 +147,27 @@ curl -LsSf https://astral.sh/ruff/install.sh | sh
 ## Estrutura
 
 ```
-opencode.jsonc          # config principal (LSP, MCP, plugins, skills)
+opencode.jsonc          # config principal (LSP, MCP, plugins, permissões)
 install.sh              # instalador idempotente
 bin/install.mjs         # instalador cross-platform (Node.js)
 skills/                 # skills globais
+commands/               # comandos customizados (/review, /test, etc.)
 docs/                   # lsp.md · mcp.md · plugins.md
 ```
+
+## Permissões
+
+O `opencode.jsonc` inclui permissões granulares pré-configuradas:
+- **Auto-approve** para operações seguras: leitura, escrita, git read-only
+- **Ask** para comandos destrutivos: `rm`, `git push`, `git commit`, `npm install`
+- **Wildcard** para bash: comandos seguros como `git status`, `ls`, `grep` são auto-aprovados
+
+Edite as regras de permissão no `opencode.jsonc` conforme seu fluxo de trabalho.
 
 ## Notas
 
 - **Runner padronizado:** tudo via `npx` (Node.js). O único binário fora desse
   padrão é o `ruff` (Rust, sem pacote npm — roda direto, não via `npx`).
-- **Um só orquestrador:** `Superpowers`. Não empilhe frameworks de
-  agentes — cada um adiciona muitas ferramentas ao contexto.
 - **Memória sem credenciais:** `opencode-mem` é local (SQLite + embeddings
   locais); nada sai da máquina.
 - MCPs e LSPs consomem contexto/tokens — mantenha ativos só os necessários

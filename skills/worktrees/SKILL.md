@@ -1,12 +1,12 @@
 ---
 name: worktrees
-description: Manage Git worktrees as OMO safe isolated coding lanes for complex, risky, or parallel work.
+description: Manage Git worktrees as safe isolated coding lanes for complex, risky, or parallel work.
 ---
 
 # Worktrees Orchestration Protocol
 
 The `worktrees` skill provides an opinionated, safe orchestration protocol for
-managing Git worktrees as isolated coding lanes. Its value is giving the Orchestrator a consistent OMO workflow for parallel agents, risky experiments, integration review, and cleanup.
+managing Git worktrees as isolated coding lanes. Its value is giving the Orchestrator a consistent workflow for parallel agents, risky experiments, integration review, and cleanup.
 
 ## Core Contract
 
@@ -90,21 +90,21 @@ keeps them readable to OpenCode.
 `.gitignore`:
 
 ```gitignore
-# BEGIN superpowers worktrees
+# BEGIN worktrees
 .slim/worktrees/
 .slim/worktrees.json
-# END superpowers worktrees
+# END worktrees
 ```
 
 `.ignore`:
 
 ```ignore
-# BEGIN superpowers worktrees
+# BEGIN worktrees
 !.slim/
 !.slim/worktrees.json
 !.slim/worktrees/
 !.slim/worktrees/**
-# END superpowers worktrees
+# END worktrees
 ```
 
 ---

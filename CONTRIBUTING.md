@@ -9,6 +9,7 @@ to a user's global OpenCode config dir.
 - `opencode.jsonc` — main config (LSP, MCP, plugins, `instructions`).
 - `bin/install.mjs` — cross-platform installer (runs under Node).
 - `skills/` — global skills copied into the user's config.
+- `commands/` — custom slash commands.
 - `docs/` — `lsp.md`, `mcp.md`, `plugins.md`.
 - `README.md` — user-facing quick start.
 
@@ -22,7 +23,7 @@ to a user's global OpenCode config dir.
 ## Changing the installer (`bin/install.mjs`)
 
 - It runs under **Node** (`#!/usr/bin/env node`), not Bun.
-- It **checks** for Node.js/uv/ruff and prints install commands if any
+- It **checks** for Node.js/uv/ruff/rtk and prints install commands if any
   are missing — it does **not** auto-install them.
 - Pass command arguments with **`spawnSync`**. `execSync(full, { args })`
   silently drops `args` and breaks `setx` / `npx` calls.

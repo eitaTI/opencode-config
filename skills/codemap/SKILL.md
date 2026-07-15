@@ -38,13 +38,20 @@ If neither file exists: Continue to Step 2 (Initialize).
      - Build/Deps: `node_modules/**`, `dist/**`, `build/**`, `*.min.js`
    - Respect `.gitignore` automatically
 3. **Run codemap.mjs init** (the path below assumes Linux/macOS; on Windows
-   the global config dir is `%LOCALAPPDATA%\opencode`, so use
-   `%LOCALAPPDATA%\opencode\skills\codemap\scripts\codemap.mjs`):
+   the global config dir is `%USERPROFILE%\.config\opencode`, so use
+   `%USERPROFILE%\.config\opencode\skills\codemap\scripts\codemap.mjs`):
 
 ```bash
+# Linux/macOS
 node ~/.config/opencode/skills/codemap/scripts/codemap.mjs init \
   --root ./ \
   --include "src/**/*.ts" \
+  --exclude "**/*.test.ts" --exclude "dist/**" --exclude "node_modules/**"
+
+# Windows (PowerShell)
+node $env:USERPROFILE\.config\opencode\skills\codemap\scripts\codemap.mjs init `
+  --root ./ `
+  --include "src/**/*.ts" `
   --exclude "**/*.test.ts" --exclude "dist/**" --exclude "node_modules/**"
 ```
 
@@ -59,7 +66,12 @@ This creates:
 1. **Run codemap.mjs changes** to see what changed:
 
 ```bash
+# Linux/macOS
 node ~/.config/opencode/skills/codemap/scripts/codemap.mjs changes \
+  --root ./
+
+# Windows (PowerShell)
+node $env:USERPROFILE\.config\opencode\skills\codemap\scripts\codemap.mjs changes `
   --root ./
 ```
 
@@ -73,7 +85,12 @@ node ~/.config/opencode/skills/codemap/scripts/codemap.mjs changes \
 4. **Run update** to save new state:
 
 ```bash
+# Linux/macOS
 node ~/.config/opencode/skills/codemap/scripts/codemap.mjs update \
+  --root ./
+
+# Windows (PowerShell)
+node $env:USERPROFILE\.config\opencode\skills\codemap\scripts\codemap.mjs update `
   --root ./
 ```
 
@@ -128,7 +145,7 @@ Defines agent personalities and manages their configuration lifecycle.
 ## Design
 Each agent is a prompt + permission set. Config system uses:
 - Default prompts (orchestrator.ts, explorer.ts, etc.)
-- User overrides from ~/.config/opencode/superpowers.json
+- User overrides from ~/.config/opencode/config.json
 - Permission wildcards for skill/MCP access control
 
 ## Flow
@@ -146,7 +163,7 @@ Each agent is a prompt + permission set. Config system uses:
 Example **Root Codemap (Atlas)**:
 
 ```markdown
-# Repository Atlas: Superpowers
+# Repository Atlas: My Project
 
 ## Project Responsibility
 A high-performance, low-latency agent orchestration plugin for OpenCode, focusing on specialized sub-agent delegation and multiplexer-assisted child sessions.
@@ -154,7 +171,7 @@ A high-performance, low-latency agent orchestration plugin for OpenCode, focusin
 ## System Entry Points
 - `src/index.ts`: Plugin initialization and OpenCode integration.
 - `package.json`: Dependency manifest and build scripts.
-- `superpowers.json`: User configuration schema.
+- `config.json`: User configuration schema.
 
 ## Directory Map (Aggregated)
 | Directory | Responsibility Summary | Detailed Map |

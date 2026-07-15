@@ -105,12 +105,6 @@ servidor se precisar (ex.: `"pyright": { "disabled": true }`).
 - **Motivação:** Language Server para YAML (validação, autocomplete).
 - **Config extra:** requer `yaml-language-server` instalado.
 
-### `ansible-language-server`
-- **Comando:** `ansible-language-server --stdio`
-- **Escopo:** `.yml`, `.yaml`.
-- **Motivação:** Language Server para Ansible playbooks e roles.
-- **Config extra:** requer `ansible-language-server` instalado.
-
 ## Dados
 
 ### `vscode-json-language-server`

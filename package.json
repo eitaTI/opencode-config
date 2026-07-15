@@ -10,6 +10,7 @@
     "bin",
     "opencode.jsonc",
     "skills",
+    "commands",
     "docs",
     "AGENTS.md",
     "CONTRIBUTING.md"

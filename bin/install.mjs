@@ -1,12 +1,11 @@
 #!/usr/bin/env node
 // EitaTI — OpenCode global config installer (cross-platform).
 // Run via:  npx github:EitaTI/opencode-config
-// Works on Windows, macOS and Linux. Copies opencode.jsonc, skills/
-// and docs/ into the OpenCode global config dir, and installs the
-// Superpowers orchestrator via git-backed plugin. Requires Node.js/npm + uv
-// (and ruff for the Python LSP) to be installed beforehand — it checks for
+// Works on Windows, macOS and Linux. Copies opencode.jsonc, skills/,
+// commands/ and docs/ into the OpenCode global config dir (~/.config/opencode).
+// Requires Node.js/npm + uv + ruff to be installed beforehand — it checks for
 // them and prints install instructions for any that are missing, then asks
-// you to re-run.
+// you to re-run. rtk is recommended but optional (warns instead of aborting).
 
 import fs from "node:fs";
 import path from "node:path";
@@ -17,7 +16,7 @@ import { fileURLToPath } from "node:url";
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const REPO_ROOT = path.resolve(__dirname, "..");
 
-const SOURCE_ITEMS = ["opencode.jsonc", "skills", "docs", "AGENTS.md", "CONTRIBUTING.md"];
+const SOURCE_ITEMS = ["opencode.jsonc", "skills", "commands", "docs", "AGENTS.md"];
 
 // ---------------------------------------------------------------------------
 // helpers
@@ -36,18 +35,12 @@ function isArchBased() {
   }
 }
 
+// OpenCode uses ~/.config/opencode on ALL platforms (XDG convention).
+// The only exception is macOS where it could use ~/Library/Application Support,
+// but the user confirmed ~/.config/opencode works on their Windows setup.
 function resolveTargetDir() {
   if (process.env.OPENCODE_CONFIG_DIR) return process.env.OPENCODE_CONFIG_DIR;
   if (process.env.OPENCODE_CONFIG) return path.dirname(process.env.OPENCODE_CONFIG);
-  if (isWin) {
-    const base =
-      process.env.LOCALAPPDATA || process.env.APPDATA ||
-      path.join(os.homedir(), "AppData", "Roaming");
-    return path.join(base, "opencode");
-  }
-  if (process.platform === "darwin") {
-    return path.join(os.homedir(), "Library", "Application Support", "opencode");
-  }
   const xdg = process.env.XDG_CONFIG_HOME || path.join(os.homedir(), ".config");
   return path.join(xdg, "opencode");
 }
@@ -61,20 +54,6 @@ function which(cmd) {
   } catch {
     return null;
   }
-}
-
-function run(cmd, args, opts = {}) {
-  const full = isWin ? `${cmd}.exe` : cmd;
-  // spawnSync searches PATH on every platform and passes `args` safely
-  // (execSync ignores an `args` option, which silently dropped every
-  // argument — e.g. setx). Throws on failure
-  // so callers can catch non-fatal steps.
-  const r = spawnSync(full, args, { stdio: "inherit", ...opts });
-  if (r.error) throw r.error;
-  if (r.status !== 0 && r.status !== null) {
-    throw new Error(`command failed (status ${r.status}): ${full} ${args.join(" ")}`);
-  }
-  return r;
 }
 
 function copyRecursive(src, dest) {
@@ -141,21 +120,36 @@ function cleanTarget(target, dry) {
   }
 }
 
+function backupTarget(target) {
+  if (!fs.existsSync(target)) return null;
+  const timestamp = new Date().toISOString().replace(/[:.]/g, "-").slice(0, 19);
+  const backupDir = `${target}.backup-${timestamp}`;
+  fs.cpSync(target, backupDir, { recursive: true });
+  log(`Backup created: ${backupDir}`);
+  return backupDir;
+}
+
+function hasExistingConfig(target) {
+  if (!fs.existsSync(target)) return false;
+  const items = fs.readdirSync(target);
+  return items.some((f) => SOURCE_ITEMS.includes(f));
+}
+
 // ---------------------------------------------------------------------------
-// prerequisite checks (no auto-install — keeps the installer simple)
+// prerequisite checks
 // ---------------------------------------------------------------------------
-// Tools the installed config depends on. The installer only checks for them
-// and prints install instructions when any are missing; it never installs.
+// Core tools: installer aborts if missing.
+// Optional tools: installer warns but continues.
 function getNodeInstallCmd() {
   if (isWin) return 'powershell -c "winget install OpenJS.NodeJS.LTS"';
   if (isArchBased()) return "sudo pacman -S nodejs npm";
   return "curl -fsSL https://deb.nodesource.com/setup_lts.x | sudo -E bash - && sudo apt-get install -y nodejs";
 }
 
-const PREREQS = [
+const PREREQS_CORE = [
   {
     name: "node",
-    note: "JavaScript runtime for npx-based MCP servers + LSP + Superpowers",
+    note: "JavaScript runtime for npx-based MCP servers + LSP",
     get win() { return 'powershell -c "winget install OpenJS.NodeJS.LTS"'; },
     get unix() { return getNodeInstallCmd(); },
   },
@@ -173,24 +167,31 @@ const PREREQS = [
   },
 ];
 
+const PREREQS_OPTIONAL = [
+  {
+    name: "rtk",
+    note: "filters shell output to reduce LLM token consumption by 60-90% (recommended)",
+    win: 'powershell -c "irm https://rtk-ai.app/install.ps1 | iex"',
+    unix: "curl -fsSL https://rtk-ai.app/install.sh | sh",
+  },
+];
+
 function checkPrerequisites() {
-  return PREREQS.filter((p) => !which(p.name));
+  const core = PREREQS_CORE.filter((p) => !which(p.name));
+  const optional = PREREQS_OPTIONAL.filter((p) => !which(p.name));
+  return { core, optional };
 }
 
-function printPrerequisiteHelp(missing) {
+function printPrerequisiteHelp(missing, label) {
   const osLabel = isWin ? "Windows" : isArchBased() ? "Arch-based Linux" : "macOS / Linux";
   console.log(`
-Missing required tool(s) (${osLabel}):
+${label} tool(s) missing (${osLabel}):
 `);
   for (const p of missing) {
     const cmd = isWin ? p.win : p.unix;
     console.log(`  ${p.name} — ${p.note}`);
     console.log(`    ${cmd}`);
   }
-  console.log(`
-Install the above, then re-run:
-  npx github:EitaTI/opencode-config
-`);
 }
 
 // ---------------------------------------------------------------------------
@@ -201,43 +202,73 @@ function printHelp() {
 EitaTI — OpenCode global config installer
 
 Usage:
-  npx github:EitaTI/opencode-config [--dry-run] [--clean]
+  npx github:EitaTI/opencode-config [--dry-run] [--clean] [--force]
 
 Options:
   --dry-run     Preview what would happen without writing files.
   --clean       Remove ALL config files (no reinstall).
+  --force       Overwrite existing config without prompting.
   -h, --help    Show this help.
 
 What it does:
-  1. Checks for required tools (Node.js, uv, ruff).
-  2. Copies config files to OpenCode global config dir.
-  3. Installs Superpowers orchestrator via plugin system.
+  1. Checks for required tools (Node.js, uv, ruff). rtk is optional.
+  2. If target dir has existing config, prompts for confirmation (or --force).
+  3. Creates a timestamped backup before overwriting.
+  4. Copies config files to ~/.config/opencode.
 
   With --clean, removes everything without reinstalling:
-  - Config files (opencode.jsonc, skills/, docs/, AGENTS.md, CONTRIBUTING.md)
+  - Config files (opencode.jsonc, skills/, commands/, docs/, AGENTS.md)
   - Plugin runtime files (opencode-mem.jsonc, dcp.jsonc, smart-title.jsonc)
   - Plugin system files (package.json, package-lock.json, node_modules/)
   To reinstall after cleaning, run the command without --clean.
 `);
 }
 
-function main() {
+function promptUser(question) {
+  // Synchronous stdin read for CLI prompt
+  const rl = (() => {
+    try {
+      return require("node:readline").createInterface({
+        input: process.stdin,
+        output: process.stdout,
+      });
+    } catch {
+      return null;
+    }
+  })();
+  if (!rl) return true; // fallback to --force behavior if readline unavailable
+  return new Promise((resolve) => {
+    rl.question(question, (answer) => {
+      rl.close();
+      resolve(/^(y|yes|s|sim)$/i.test(answer.trim()));
+    });
+  });
+}
+
+async function main() {
   const args = process.argv.slice(2);
   if (args.includes("-h") || args.includes("--help")) return printHelp();
   const dry = args.includes("--dry-run");
   const clean = args.includes("--clean");
+  const force = args.includes("--force");
 
-  // Prerequisite check — Node.js/uv/ruff must already be installed.
-  const missing = checkPrerequisites();
-  if (missing.length) {
+  // Prerequisite check — core tools must be installed.
+  const { core, optional } = checkPrerequisites();
+  if (core.length) {
     if (dry) {
-      warn("dry-run: missing prerequisites (config would still be copied):");
-      for (const p of missing) warn(`  ${p.name} not found`);
+      warn("dry-run: missing core prerequisites (config would still be copied):");
+      for (const p of core) warn(`  ${p.name} not found`);
     } else {
-      printPrerequisiteHelp(missing);
-      console.error("\nAborting. Install the tools above, then re-run the command.");
+      printPrerequisiteHelp(core, "Required");
+      console.error("\nInstall the tools above, then re-run the command.");
       process.exit(1);
     }
+  }
+
+  // Optional tools — warn but continue.
+  if (optional.length && !dry) {
+    printPrerequisiteHelp(optional, "Optional");
+    console.log("\nContinuing without optional tools. Install them later for better token savings.\n");
   }
 
   const target = resolveTargetDir();
@@ -259,6 +290,17 @@ To reinstall, run:
     return;
   }
 
+  // Check for existing config and handle overwriting.
+  if (!dry && hasExistingConfig(target) && !force) {
+    warn(`Target directory already has OpenCode config: ${target}`);
+    const answer = await promptUser("Overwrite existing config? (y/N) ");
+    if (!answer) {
+      console.log("Aborted. Use --force to overwrite without prompting.");
+      process.exit(0);
+    }
+    backupTarget(target);
+  }
+
   for (const item of SOURCE_ITEMS) {
     const src = path.join(REPO_ROOT, item);
     if (!fs.existsSync(src)) continue;
@@ -272,8 +314,6 @@ To reinstall, run:
     log("[dry-run] Done.");
     return;
   }
-
-  log("Superpowers orchestrator will be installed by OpenCode via plugin system");
 
   console.log(`
 Done! Config installed to:
