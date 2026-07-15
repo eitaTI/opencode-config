@@ -225,7 +225,7 @@ const PREREQS_OPTIONAL = [
       if (isWin) {
         return {
           cmd: "powershell",
-          args: ["-c", "$ProgressPreference='SilentlyContinue'; $v='0.43.0'; $url=\"https://github.com/rtk-ai/rtk/releases/download/v$v/rtk-x86_64-pc-windows-msvc.zip\"; Invoke-WebRequest -Uri $url -OutFile \"$env:TEMP\\rtk.zip\"; Expand-Archive -Path \"$env:TEMP\\rtk.zip\" -DestinationPath \"$env:USERPROFILE\\.local\\bin\" -Force; if ($env:PATH -notmatch [regex]::Escape($env:USERPROFILE+'\\.local\\bin')) { [Environment]::SetEnvironmentVariable('PATH', $env:PATH+';'+$env:USERPROFILE+'\\.local\\bin', 'User') }"],
+          args: ["-c", "$ProgressPreference='SilentlyContinue'; $v='0.43.0'; $url=\"https://github.com/rtk-ai/rtk/releases/download/v$v/rtk-x86_64-pc-windows-msvc.zip\"; Invoke-WebRequest -Uri $url -OutFile \"$env:TEMP\\rtk.zip\"; Add-Type -AssemblyName System.IO.Compression.FileSystem; if (Test-Path \"$env:USERPROFILE\\.local\\bin\\rtk.exe\") { Remove-Item \"$env:USERPROFILE\\.local\\bin\\rtk.exe\" -Force }; [System.IO.Compression.ZipFile]::ExtractToDirectory(\"$env:TEMP\\rtk.zip\", \"$env:USERPROFILE\\.local\\bin\"); if ($env:PATH -notmatch [regex]::Escape($env:USERPROFILE+'\\.local\\bin')) { [Environment]::SetEnvironmentVariable('PATH', $env:PATH+';'+$env:USERPROFILE+'\\.local\\bin', 'User') }"],
         };
       }
       return { cmd: "bash", args: ["-c", "curl -fsSL https://raw.githubusercontent.com/rtk-ai/rtk/refs/heads/master/install.sh | sh"] };
