@@ -3,9 +3,8 @@
 // Run via:  npx github:EitaTI/opencode-config
 // Works on Windows, macOS and Linux. Copies opencode.jsonc, skills/,
 // commands/ and docs/ into the OpenCode global config dir (~/.config/opencode).
-// Requires Node.js/npm + uv + ruff to be installed beforehand — it checks for
-// them and prints install instructions for any that are missing, then asks
-// you to re-run. rtk is recommended but optional (warns instead of aborting).
+// Auto-installs missing prerequisites (Node.js, uv, ruff, rtk) unless
+// --no-auto-install is specified.
 
 import fs from "node:fs";
 import path from "node:path";
@@ -35,9 +34,18 @@ function isArchBased() {
   }
 }
 
+function detectDistro() {
+  if (process.platform !== "linux") return "unknown";
+  try {
+    if (spawnSync("which", ["pacman"], { stdio: "pipe" }).status === 0) return "arch";
+    if (spawnSync("which", ["apt-get"], { stdio: "pipe" }).status === 0) return "debian";
+    if (spawnSync("which", ["dnf"], { stdio: "pipe" }).status === 0) return "fedora";
+    if (spawnSync("which", ["zypper"], { stdio: "pipe" }).status === 0) return "suse";
+  } catch {}
+  return "unknown";
+}
+
 // OpenCode uses ~/.config/opencode on ALL platforms (XDG convention).
-// The only exception is macOS where it could use ~/Library/Application Support,
-// but the user confirmed ~/.config/opencode works on their Windows setup.
 function resolveTargetDir() {
   if (process.env.OPENCODE_CONFIG_DIR) return process.env.OPENCODE_CONFIG_DIR;
   if (process.env.OPENCODE_CONFIG) return path.dirname(process.env.OPENCODE_CONFIG);
@@ -54,6 +62,13 @@ function which(cmd) {
   } catch {
     return null;
   }
+}
+
+function runCommand(cmd, args, opts = {}) {
+  log(`Running: ${cmd} ${args.join(" ")}`);
+  const r = spawnSync(cmd, args, { stdio: "inherit", ...opts });
+  if (r.error) throw r.error;
+  return r.status === 0;
 }
 
 function copyRecursive(src, dest) {
@@ -136,34 +151,68 @@ function hasExistingConfig(target) {
 }
 
 // ---------------------------------------------------------------------------
-// prerequisite checks
+// prerequisite checks + auto-install
 // ---------------------------------------------------------------------------
-// Core tools: installer aborts if missing.
-// Optional tools: installer warns but continues.
 function getNodeInstallCmd() {
-  if (isWin) return 'powershell -c "winget install OpenJS.NodeJS.LTS"';
-  if (isArchBased()) return "sudo pacman -S nodejs npm";
-  return "curl -fsSL https://deb.nodesource.com/setup_lts.x | sudo -E bash - && sudo apt-get install -y nodejs";
+  if (isWin) return { cmd: "powershell", args: ["-c", "winget install OpenJS.NodeJS.LTS"] };
+  const distro = detectDistro();
+  switch (distro) {
+    case "arch":
+      return { cmd: "sudo", args: ["pacman", "-S", "--noconfirm", "nodejs", "npm"] };
+    case "debian":
+      return { cmd: "bash", args: ["-c", "curl -fsSL https://deb.nodesource.com/setup_lts.x | sudo -E bash - && sudo apt-get install -y nodejs"] };
+    case "fedora":
+      return { cmd: "sudo", args: ["dnf", "install", "-y", "nodejs", "npm"] };
+    case "suse":
+      return { cmd: "sudo", args: ["zypper", "install", "-y", "nodejs", "npm"] };
+    default:
+      return null;
+  }
+}
+
+function getLinuxBrewCmd() {
+  // Check if Homebrew is installed on Linux (Linuxbrew)
+  try {
+    const r = spawnSync("which", ["brew"], { stdio: "pipe" });
+    if (r.status === 0) return { cmd: "brew", args: ["install", "node"] };
+  } catch {}
+  return null;
+}
+
+function getMacNodeInstallCmd() {
+  // Check if Homebrew is installed
+  try {
+    const r = spawnSync("which", ["brew"], { stdio: "pipe" });
+    if (r.status === 0) return { cmd: "brew", args: ["install", "node"] };
+  } catch {}
+  return null;
 }
 
 const PREREQS_CORE = [
   {
     name: "node",
     note: "JavaScript runtime for npx-based MCP servers + LSP",
-    get win() { return 'powershell -c "winget install OpenJS.NodeJS.LTS"'; },
-    get unix() { return getNodeInstallCmd(); },
+    getInstallCmd() {
+      if (isWin) return { cmd: "powershell", args: ["-c", "winget install OpenJS.NodeJS.LTS"] };
+      if (process.platform === "darwin") return getMacNodeInstallCmd();
+      return getNodeInstallCmd();
+    },
   },
   {
     name: "uv",
     note: "runs the official Python fetch MCP server via uvx",
-    win: 'powershell -c "irm https://astral.sh/uv/install.ps1 | iex"',
-    unix: "curl -LsSf https://astral.sh/uv/install.sh | sh",
+    getInstallCmd() {
+      if (isWin) return { cmd: "powershell", args: ["-c", "irm https://astral.sh/uv/install.ps1 | iex"] };
+      return { cmd: "bash", args: ["-c", "curl -LsSf https://astral.sh/uv/install.sh | sh"] };
+    },
   },
   {
     name: "ruff",
     note: "Python LSP + formatter used by the config",
-    win: 'powershell -c "irm https://astral.sh/ruff/install.ps1 | iex"',
-    unix: "curl -LsSf https://astral.sh/ruff/install.sh | sh",
+    getInstallCmd() {
+      if (isWin) return { cmd: "powershell", args: ["-c", "irm https://astral.sh/ruff/install.ps1 | iex"] };
+      return { cmd: "bash", args: ["-c", "curl -LsSf https://astral.sh/ruff/install.sh | sh"] };
+    },
   },
 ];
 
@@ -171,8 +220,10 @@ const PREREQS_OPTIONAL = [
   {
     name: "rtk",
     note: "filters shell output to reduce LLM token consumption by 60-90% (recommended)",
-    win: 'powershell -c "irm https://rtk-ai.app/install.ps1 | iex"',
-    unix: "curl -fsSL https://rtk-ai.app/install.sh | sh",
+    getInstallCmd() {
+      if (isWin) return { cmd: "powershell", args: ["-c", "irm https://rtk-ai.app/install.ps1 | iex"] };
+      return { cmd: "bash", args: ["-c", "curl -fsSL https://rtk-ai.app/install.sh | sh"] };
+    },
   },
 ];
 
@@ -188,9 +239,32 @@ function printPrerequisiteHelp(missing, label) {
 ${label} tool(s) missing (${osLabel}):
 `);
   for (const p of missing) {
-    const cmd = isWin ? p.win : p.unix;
+    const installCmd = p.getInstallCmd();
+    const cmdStr = installCmd ? `${installCmd.cmd} ${installCmd.args.join(" ")}` : "manual install required";
     console.log(`  ${p.name} — ${p.note}`);
-    console.log(`    ${cmd}`);
+    console.log(`    ${cmdStr}`);
+  }
+}
+
+async function autoInstall(missing) {
+  for (const p of missing) {
+    const installCmd = p.getInstallCmd();
+    if (!installCmd) {
+      warn(`No auto-install command available for ${p.name} — install manually`);
+      continue;
+    }
+
+    log(`Installing ${p.name}...`);
+    try {
+      const success = runCommand(installCmd.cmd, installCmd.args);
+      if (success) {
+        log(`${p.name} installed successfully`);
+      } else {
+        warn(`Failed to install ${p.name} — install manually`);
+      }
+    } catch (err) {
+      warn(`Error installing ${p.name}: ${err.message}`);
+    }
   }
 }
 
@@ -202,19 +276,21 @@ function printHelp() {
 EitaTI — OpenCode global config installer
 
 Usage:
-  npx github:EitaTI/opencode-config [--dry-run] [--clean] [--force]
+  npx github:EitaTI/opencode-config [options]
 
 Options:
-  --dry-run     Preview what would happen without writing files.
-  --clean       Remove ALL config files (no reinstall).
-  --force       Overwrite existing config without prompting.
-  -h, --help    Show this help.
+  --dry-run           Preview what would happen without writing files.
+  --clean             Remove ALL config files (no reinstall).
+  --force             Overwrite existing config without prompting.
+  --no-auto-install   Don't auto-install missing prerequisites (just print commands).
+  -h, --help          Show this help.
 
 What it does:
   1. Checks for required tools (Node.js, uv, ruff). rtk is optional.
-  2. If target dir has existing config, prompts for confirmation (or --force).
-  3. Creates a timestamped backup before overwriting.
-  4. Copies config files to ~/.config/opencode.
+  2. Auto-installs missing prerequisites (unless --no-auto-install).
+  3. If target dir has existing config, prompts for confirmation (or --force).
+  4. Creates a timestamped backup before overwriting.
+  5. Copies config files to ~/.config/opencode.
 
   With --clean, removes everything without reinstalling:
   - Config files (opencode.jsonc, skills/, commands/, docs/, AGENTS.md)
@@ -225,7 +301,6 @@ What it does:
 }
 
 function promptUser(question) {
-  // Synchronous stdin read for CLI prompt
   const rl = (() => {
     try {
       return require("node:readline").createInterface({
@@ -251,24 +326,42 @@ async function main() {
   const dry = args.includes("--dry-run");
   const clean = args.includes("--clean");
   const force = args.includes("--force");
+  const noAutoInstall = args.includes("--no-auto-install");
 
   // Prerequisite check — core tools must be installed.
   const { core, optional } = checkPrerequisites();
+
   if (core.length) {
     if (dry) {
       warn("dry-run: missing core prerequisites (config would still be copied):");
       for (const p of core) warn(`  ${p.name} not found`);
-    } else {
+    } else if (noAutoInstall) {
       printPrerequisiteHelp(core, "Required");
       console.error("\nInstall the tools above, then re-run the command.");
       process.exit(1);
+    } else {
+      log(`Missing core prerequisites: ${core.map((p) => p.name).join(", ")}`);
+      await autoInstall(core);
+
+      // Re-check after install
+      const stillMissing = PREREQS_CORE.filter((p) => !which(p.name));
+      if (stillMissing.length) {
+        printPrerequisiteHelp(stillMissing, "Still missing");
+        console.error("\nAuto-install failed for the tools above. Install manually, then re-run.");
+        process.exit(1);
+      }
     }
   }
 
-  // Optional tools — warn but continue.
+  // Optional tools — auto-install if enabled, warn otherwise.
   if (optional.length && !dry) {
-    printPrerequisiteHelp(optional, "Optional");
-    console.log("\nContinuing without optional tools. Install them later for better token savings.\n");
+    if (noAutoInstall) {
+      printPrerequisiteHelp(optional, "Optional");
+      console.log("\nContinuing without optional tools. Install them later for better token savings.\n");
+    } else {
+      log(`Installing optional tools: ${optional.map((p) => p.name).join(", ")}`);
+      await autoInstall(optional);
+    }
   }
 
   const target = resolveTargetDir();

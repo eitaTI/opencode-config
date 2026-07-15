@@ -21,15 +21,16 @@ npx -y github:EitaTI/opencode-config
 > $env:Path = [System.Environment]::GetEnvironmentVariable("Path","Machine") + ";" + [System.Environment]::GetEnvironmentVariable("Path","User")
 > ```
 
-Esse comando (1) copia `opencode.jsonc`, `skills/`, `commands/`, `docs/` e `AGENTS.md` para o
-diretório global do OpenCode (`~/.config/opencode`), (2) confere os pré-requisitos **Node.js**, **uv** e
-**ruff** (mostra o comando de instalação de cada um se faltar), (3) se já existir config, cria backup
+Esse comando (1) **auto-instala** pré-requisitos faltantes (Node.js, uv, ruff, rtk),
+(2) copia `opencode.jsonc`, `skills/`, `commands/`, `docs/` e `AGENTS.md` para o
+diretório global do OpenCode (`~/.config/opencode`), (3) se já existir config, cria backup
 antes de sobrescrever. Opções:
 
 ```bash
-npx github:EitaTI/opencode-config --dry-run    # preview sem alterar nada
-npx github:EitaTI/opencode-config --force       # sobrescreve sem perguntar
-npx github:EitaTI/opencode-config --clean       # remove tudo (sem reinstalar)
+npx github:EitaTI/opencode-config --dry-run          # preview sem alterar nada
+npx github:EitaTI/opencode-config --force             # sobrescreve sem perguntar
+npx github:EitaTI/opencode-config --clean             # remove tudo (sem reinstalar)
+npx github:EitaTI/opencode-config --no-auto-install   # só mostra comandos, não instala
 ```
 
 ## Instalação via clone (dev/contribuição)
@@ -71,10 +72,11 @@ Detalhes, motivação e configuração extra de cada item estão em `docs/`:
 
 ## Pré-requisitos
 
-O instalador confere se as ferramentas estão presentes. **Node.js**, **uv** e
-**ruff** são obrigatórios — se faltar alguma, o instalador aborta com o
-comando de instalação. **rtk** é opcional (recomendado) — se faltar, apenas
-avisa e continua.
+O instalador **auto-instala** pré-requisitos faltantes. **Node.js**, **uv** e
+**ruff** são obrigatórios — o instalador instala automaticamente se ausentes.
+**rtk** é opcional (recomendado) — também é instalado automaticamente.
+
+Use `--no-auto-install` para ver os comandos sem executar:
 
 ### Pop!_OS / Ubuntu / Debian
 
