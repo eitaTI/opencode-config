@@ -37,24 +37,24 @@ DISTRO=$(detect_distro)
 if ! command -v node >/dev/null 2>&1; then
 	echo "==> Installing Node.js LTS..."
 	case "$DISTRO" in
-		arch)
-			sudo pacman -S --noconfirm nodejs npm
-			;;
-		debian)
-			curl -fsSL https://deb.nodesource.com/setup_lts.x | sudo -E bash -
-			sudo apt-get install -y nodejs
-			;;
-		fedora)
-			sudo dnf install -y nodejs npm
-			;;
-		suse)
-			sudo zypper install -y nodejs npm
-			;;
-		*)
-			echo "    Unsupported distro. Install Node.js manually:"
-			echo "    https://nodejs.org/en/download"
-			exit 1
-			;;
+	arch)
+		sudo pacman -S --noconfirm nodejs npm
+		;;
+	debian)
+		curl -fsSL https://deb.nodesource.com/setup_lts.x | sudo -E bash -
+		sudo apt-get install -y nodejs
+		;;
+	fedora)
+		sudo dnf install -y nodejs npm
+		;;
+	suse)
+		sudo zypper install -y nodejs npm
+		;;
+	*)
+		echo "    Unsupported distro. Install Node.js manually:"
+		echo "    https://nodejs.org/en/download"
+		exit 1
+		;;
 	esac
 else
 	echo "==> Node.js already present: $(node --version)"
@@ -85,7 +85,7 @@ fi
 # Single Rust binary, zero dependencies.
 if ! command -v rtk >/dev/null 2>&1; then
 	echo "==> Installing rtk (Rust Token Killer)..."
-	curl -fsSL https://rtk-ai.app/install.sh | sh
+	curl -fsSL https://raw.githubusercontent.com/rtk-ai/rtk/refs/heads/master/install.sh | sh
 else
 	echo "==> rtk already present: $(rtk --version)"
 fi

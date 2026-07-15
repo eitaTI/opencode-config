@@ -92,7 +92,7 @@ curl -LsSf https://astral.sh/uv/install.sh | sh
 curl -LsSf https://astral.sh/ruff/install.sh | sh
 
 # rtk (Rust Token Killer — optional, reduces LLM token consumption by 60-90%)
-curl -fsSL https://rtk-ai.app/install.sh | sh
+curl -fsSL https://raw.githubusercontent.com/rtk-ai/rtk/refs/heads/master/install.sh | sh
 ```
 
 ### CachyOS / Arch Linux / EndeavourOS
@@ -125,7 +125,8 @@ powershell -c "irm https://astral.sh/uv/install.ps1 | iex"
 powershell -c "irm https://astral.sh/ruff/install.ps1 | iex"
 
 # rtk (optional — Rust Token Killer)
-powershell -c "irm https://rtk-ai.app/install.ps1 | iex"
+# Download from: https://github.com/rtk-ai/rtk/releases/latest
+# Extract rtk-x86_64-pc-windows-msvc.zip to a directory in your PATH
 ```
 
 ### macOS
@@ -141,7 +142,7 @@ curl -LsSf https://astral.sh/uv/install.sh | sh
 curl -LsSf https://astral.sh/ruff/install.sh | sh
 
 # rtk (optional — Rust Token Killer)
-curl -fsSL https://rtk-ai.app/install.sh | sh
+curl -fsSL https://raw.githubusercontent.com/rtk-ai/rtk/refs/heads/master/install.sh | sh
 ```
 
 - **`BRAVE_API_KEY`** — só se for ativar `brave-search`.
