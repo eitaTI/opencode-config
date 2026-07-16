@@ -45,6 +45,7 @@ bash install.sh    # Unix apenas
 
 O `install.sh` (idempotente) faz:
 1. Detecta a distro (Arch/Debian/Fedora/SUSE) e instala **Node.js** e **ruff** se ausentes.
+   - No Arch, usa **FNM** para Node.js (evita conflitos com `/usr`) e `pacman -S ruff`.
 2. Instala **uv** e **rtk** se ausentes.
 3. Cria symlinks de `opencode.jsonc`, `skills/`, `commands/`, `docs/` e `AGENTS.md` em `~/.config/opencode`.
 
@@ -112,6 +113,25 @@ Ou use o instalador cross-platform:
 npx -y github:EitaTI/opencode-config
 ```
 
+O instalador usa **FNM** (Fast Node Manager) para instalar **Node.js** no Arch
+(evita conflitos com pacotes do sistema e permite troca de versão por projeto).
+**ruff** é instalado via `pacman -S ruff` (repositório oficial [extra]).
+
+Para os **LSPs** listados no config, instale via pacman/AUR:
+
+```bash
+# LSPs nos repositórios oficiais (extra)
+sudo pacman -S bash-language-server yaml-language-server \
+  vscode-json-languageserver vscode-html-languageserver \
+  vscode-css-languageserver
+
+# LSPs na AUR (use yay ou paru)
+yay -S vtsls dockerfile-language-server emmet-language-server
+```
+
+> **Nota:** `vscode-markdown-language-server` não tem pacote oficial no Arch.
+> Para Markdown, o LSP funciona via `npx -y` (já configurado no opencode.jsonc).
+
 ### Windows
 
 ```powershell
@@ -170,7 +190,8 @@ Edite as regras de permissão no `opencode.jsonc` conforme seu fluxo de trabalho
 ## Notas
 
 - **Runner padronizado:** tudo via `npx` (Node.js). O único binário fora desse
-  padrão é o `ruff` (Rust, sem pacote npm — roda direto, não via `npx`).
+  padrão é o `ruff` (Rust, sem pacote npm — no Arch, instalado via `pacman`;
+  noutras distros, binário standalone da Astral).
 - **Memória sem credenciais:** `opencode-mem` é local (SQLite + embeddings
   locais); nada sai da máquina.
 - MCPs e LSPs consomem contexto/tokens — mantenha ativos só os necessários

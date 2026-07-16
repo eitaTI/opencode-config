@@ -13,9 +13,6 @@ if [[ "$OSTYPE" == "msys" || "$OSTYPE" == "cygwin" || "$OSTYPE" == "win32" ]]; t
 	exit 1
 fi
 
-SRC="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-DEST="${XDG_CONFIG_HOME:-$HOME/.config}/opencode"
-
 # --- Detect distro / package manager ---
 detect_distro() {
 	if command -v pacman >/dev/null 2>&1; then
@@ -31,14 +28,50 @@ detect_distro() {
 	fi
 }
 
+# --- curl check (needed for ruff, uv, rtk installation) ---
+if ! command -v curl >/dev/null 2>&1; then
+	echo "==> ERROR: curl is required but not installed."
+	case "$(detect_distro)" in
+	arch)    echo "    Install with: sudo pacman -S curl" ;;
+	debian)  echo "    Install with: sudo apt-get install -y curl" ;;
+	fedora)  echo "    Install with: sudo dnf install -y curl" ;;
+	suse)    echo "    Install with: sudo zypper install -y curl" ;;
+	*)       echo "    Install curl manually and re-run this script." ;;
+	esac
+	exit 1
+fi
+
+SRC="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+DEST="${XDG_CONFIG_HOME:-$HOME/.config}/opencode"
+
 DISTRO=$(detect_distro)
 
 # --- Node.js (single runner for MCP servers + plugins) ---
+# On Arch/CachyOS, prefer FNM (Fast Node Manager) over pacman to avoid
+# conflicts with system packages and allow per-project version switching.
+# On other distros, use the system package manager.
 if ! command -v node >/dev/null 2>&1; then
 	echo "==> Installing Node.js LTS..."
 	case "$DISTRO" in
 	arch)
-		sudo pacman -S --noconfirm nodejs npm
+		# Prefer FNM over pacman — avoids /usr conflicts, allows version switching.
+		if command -v fnm >/dev/null 2>&1; then
+			echo "    FNM found, installing Node.js LTS via FNM..."
+			fnm install --lts
+			fnm use lts-latest
+		elif command -v nvm >/dev/null 2>&1; then
+			echo "    NVM found, installing Node.js LTS via NVM..."
+			nvm install --lts
+			nvm use --lts
+		else
+			# Fallback: install FNM (Rust binary, zero dependencies)
+			echo "    Installing FNM (Fast Node Manager)..."
+			curl -fsSL https://fnm.vercel.app/install | bash
+			export PATH="$HOME/.local/share/fnm:$PATH"
+			eval "$(fnm env)"
+			fnm install --lts
+			fnm use lts-latest
+		fi
 		;;
 	debian)
 		curl -fsSL https://deb.nodesource.com/setup_lts.x | sudo -E bash -
@@ -61,12 +94,25 @@ else
 fi
 
 # --- ruff (Python LSP + formatter) ---
-# Standalone Rust binary. Astral does NOT publish ruff to npm, so it can't run
-# via `npx`; this is a direct binary, not a package runner. Installed standalone
-# so the only required ecosystem is Node.js (no uv/pip needed).
+# Python linter + formatter written in Rust. On Arch Linux, ruff is available
+# in the official [extra] repository (pacman -S ruff) — preferred over the
+# standalone installer since it integrates with system updates and dependency
+# management. On other distros, the standalone binary from Astral is used.
 if ! command -v ruff >/dev/null 2>&1; then
-	echo "==> Installing ruff (standalone binary)..."
-	curl -LsSf https://astral.sh/ruff/install.sh | sh
+	echo "==> Installing ruff..."
+	case "$DISTRO" in
+	arch)
+		if pacman -Qi ruff >/dev/null 2>&1; then
+			echo "    ruff already installed via pacman"
+		else
+			sudo pacman -S --noconfirm ruff
+		fi
+		;;
+	*)
+		echo "    Installing ruff (standalone binary)..."
+		curl -LsSf https://astral.sh/ruff/install.sh | sh
+		;;
+	esac
 else
 	echo "==> ruff already present: $(ruff --version)"
 fi
@@ -101,3 +147,6 @@ ln -sfn "$SRC/AGENTS.md" "$DEST/AGENTS.md"
 echo
 echo "Linked OpenCode config -> $DEST"
 echo "Verify with:  opencode mcp list   &&   opencode debug config"
+echo
+echo "IMPORTANT: Do NOT move or delete this repo directory ($SRC)."
+echo "The config above uses symlinks — moving the repo will break them."

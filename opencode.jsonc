@@ -54,7 +54,11 @@
       "bun install*": "ask",
       "pip install*": "ask",
       "pip uninstall*": "ask",
-      "uv install*": "ask"
+      "uv install*": "ask",
+      // Package managers (Arch/CachyOS)
+      "sudo pacman *": "ask",
+      "yay *": "ask",
+      "paru *": "ask"
     },
     "webfetch": "allow",
     "websearch": "allow",

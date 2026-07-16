@@ -9,6 +9,29 @@ instalação do binário `ruff` (ver abaixo).
 Regra geral: LSPs consomem memória em projetos grandes; desative por
 servidor se precisar (ex.: `"pyright": { "disabled": true }`).
 
+## Instalação por distro
+
+No **Arch Linux / CachyOS**, prefira sempre `pacman` ou AUR para instalar
+LSPs — integrado ao sistema de atualizações e sem binários soltos.
+
+| LSP | pacman (extra) | AUR | npm global |
+|-----|:-:|:-:|:-:|
+| `ruff` | `sudo pacman -S ruff` | — | — |
+| `bash-language-server` | `sudo pacman -S bash-language-server` | — | — |
+| `yaml-language-server` | `sudo pacman -S yaml-language-server` | — | — |
+| `vscode-json-language-server` | `sudo pacman -S vscode-json-languageserver` | — | — |
+| `vscode-html-language-server` | `sudo pacman -S vscode-html-languageserver` | — | — |
+| `vscode-css-language-server` | `sudo pacman -S vscode-css-languageserver` | — | — |
+| `vtsls` | — | `yay -S vtsls` | `npm i -g @vtsls/language-server` |
+| `docker-langserver` | — | `yay -S dockerfile-language-server` | `npm i -g dockerfile-language-server-nodejs` |
+| `emmet-language-server` | — | `yay -S emmet-language-server` | `npm i -g @olrtg/emmet-language-server` |
+
+> **Evite `sudo npm install -g`** no Arch — escreve fora do controle do pacman
+> e pode causar conflitos em atualizações. Use pacman/AUR sempre que possível.
+
+LSPs executados via **`npx -y`** (basedpyright, eslint-lsp, tailwindcss) não
+precisam de instalação manual — o `npx` baixa sob demanda.
+
 ## Built-ins (automáticos)
 
 | LSP | Linguagem | Motivação | Config extra |
@@ -36,9 +59,10 @@ servidor se precisar (ex.: `"pyright": { "disabled": true }`).
 - **Escopo:** `.py`, `.pyi`.
 - **Motivação:** lint + formatação rápida de Python, complementando o
   type-check. O formatter do OpenCode também usa o ruff para Python.
-- **Config extra:** o binário `ruff` precisa estar no `PATH` (instalado pelo
-  `install.sh` via installer standalone). A Astral não publica o ruff no npm,
-  então ele **não** roda via `npx` — é um binário direto.
+- **Instalação:**
+  - **Arch/CachyOS:** `sudo pacman -S ruff` (repositório oficial [extra]).
+  - **Outras distros:** `curl -LsSf https://astral.sh/ruff/install.sh | sh`
+    (binário standalone — a Astral não publica o ruff no npm).
 
 ### `basedpyright` (substitui o pyright built-in)
 - **Comando:** `npx -y basedpyright basedpyright-langserver --stdio`
@@ -55,7 +79,9 @@ servidor se precisar (ex.: `"pyright": { "disabled": true }`).
 - **Escopo:** `.ts`, `.tsx`, `.js`, `.jsx`.
 - **Motivação:** Language Server TypeScript completo (alternativa ao
   `typescript-language-server` built-in). Suporte a code actions, refs, etc.
-- **Config extra:** requer `vtsls` instalado globalmente.
+- **Instalação:**
+  - **Arch/CachyOS:** `yay -S vtsls` (AUR).
+  - **Outras distros:** `npm i -g @vtsls/language-server`.
 
 ## Web / CSS
 
@@ -72,19 +98,25 @@ servidor se precisar (ex.: `"pyright": { "disabled": true }`).
 - **Escopo:** `.html`, `.css`, `.scss`.
 - **Motivação:** abreviações Emmet em HTML/CSS (expansão rápida de
   markup). Só ativa nesses tipos de arquivo.
-- **Config extra:** nenhuma.
+- **Instalação:** roda via `npx` (sem instalação manual). Alternativa:
+  - **Arch/CachyOS:** `yay -S emmet-language-server` (AUR).
+  - **Outras distros:** `npm i -g @olrtg/emmet-language-server`.
 
 ### `vscode-html-language-server`
 - **Comando:** `vscode-html-language-server --stdio`
 - **Escopo:** `.html`, `.htm`.
 - **Motivação:** Language Server HTML completo (autocompletar, validação).
-- **Config extra:** requer `vscode-langservers-extracted` instalado.
+- **Instalação:**
+  - **Arch/CachyOS:** `sudo pacman -S vscode-html-languageserver` (repositório oficial [extra]).
+  - **Outras distros:** `npm i -g vscode-langservers-extracted`.
 
 ### `vscode-css-language-server`
 - **Comando:** `vscode-css-language-server --stdio`
 - **Escopo:** `.css`, `.scss`, `.less`.
 - **Motivação:** Language Server CSS/SCSS/LESS completo.
-- **Config extra:** requer `vscode-langservers-extracted` instalado.
+- **Instalação:**
+  - **Arch/CachyOS:** `sudo pacman -S vscode-css-languageserver` (repositório oficial [extra]).
+  - **Outras distros:** `npm i -g vscode-langservers-extracted`.
 
 ## Infra/DevOps
 
@@ -92,19 +124,25 @@ servidor se precisar (ex.: `"pyright": { "disabled": true }`).
 - **Comando:** `bash-language-server start`
 - **Escopo:** `.sh`, `.bash`.
 - **Motivação:** Language Server para scripts Bash/Shell (diagnósticos, completar).
-- **Config extra:** requer `bash-language-server` instalado.
+- **Instalação:**
+  - **Arch/CachyOS:** `sudo pacman -S bash-language-server` (repositório oficial [extra]).
+  - **Outras distros:** `npm i -g bash-language-server`.
 
 ### `docker-langserver`
 - **Comando:** `docker-langserver --stdio`
 - **Escopo:** `Dockerfile`, `.dockerfile`.
 - **Motivação:** Language Server para Dockerfiles.
-- **Config extra:** requer `docker-langserver` instalado.
+- **Instalação:**
+  - **Arch/CachyOS:** `yay -S dockerfile-language-server` (AUR).
+  - **Outras distros:** `npm i -g dockerfile-language-server-nodejs`.
 
 ### `yaml-language-server`
 - **Comando:** `yaml-language-server --stdio`
 - **Escopo:** `.yaml`, `.yml`.
 - **Motivação:** Language Server para YAML (validação, autocomplete).
-- **Config extra:** requer `yaml-language-server` instalado.
+- **Instalação:**
+  - **Arch/CachyOS:** `sudo pacman -S yaml-language-server` (repositório oficial [extra]).
+  - **Outras distros:** `npm i -g yaml-language-server`.
 
 ## Dados
 
@@ -112,13 +150,18 @@ servidor se precisar (ex.: `"pyright": { "disabled": true }`).
 - **Comando:** `vscode-json-language-server --stdio`
 - **Escopo:** `.json`, `.jsonc`.
 - **Motivação:** Language Server para JSON/JSONC (validação, autocomplete).
-- **Config extra:** requer `vscode-langservers-extracted` instalado.
+- **Instalação:**
+  - **Arch/CachyOS:** `sudo pacman -S vscode-json-languageserver` (repositório oficial [extra]).
+  - **Outras distros:** `npm i -g vscode-langservers-extracted`.
 
 ### `vscode-markdown-language-server`
 - **Comando:** `vscode-markdown-language-server --stdio`
 - **Escopo:** `.md`, `.markdown`.
 - **Motivação:** Language Server para Markdown (links, headings).
-- **Config extra:** requer `vscode-langservers-extracted` instalado.
+- **Instalação:**
+  - **Outras distros:** `npm i -g vscode-langservers-extracted`.
+  - **Arch/CachyOS:** não há pacote oficial no pacman/AUR — use `npx -y`
+    (já configurado no opencode.jsonc).
 
 ## Formatação
 

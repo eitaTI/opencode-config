@@ -158,7 +158,11 @@ function getNodeInstallCmd() {
   const distro = detectDistro();
   switch (distro) {
     case "arch":
-      return { cmd: "sudo", args: ["pacman", "-S", "--noconfirm", "nodejs", "npm"] };
+      // Prefer FNM over pacman — avoids /usr conflicts, allows version switching.
+      if (which("fnm")) return { cmd: "bash", args: ["-c", "fnm install --lts && fnm use lts-latest"] };
+      if (which("nvm")) return { cmd: "bash", args: ["-c", "nvm install --lts && nvm use --lts"] };
+      // Fallback: install FNM (Rust binary, zero dependencies)
+      return { cmd: "bash", args: ["-c", "curl -fsSL https://fnm.vercel.app/install | bash && export PATH=\"$HOME/.local/share/fnm:$PATH\" && eval \"$(fnm env)\" && fnm install --lts && fnm use lts-latest"] };
     case "debian":
       return { cmd: "bash", args: ["-c", "curl -fsSL https://deb.nodesource.com/setup_lts.x | sudo -E bash - && sudo apt-get install -y nodejs"] };
     case "fedora":
@@ -211,6 +215,7 @@ const PREREQS_CORE = [
     note: "Python LSP + formatter used by the config",
     getInstallCmd() {
       if (isWin) return { cmd: "powershell", args: ["-c", "irm https://astral.sh/ruff/install.ps1 | iex"] };
+      if (isArchBased()) return { cmd: "sudo", args: ["pacman", "-S", "--noconfirm", "ruff"] };
       return { cmd: "bash", args: ["-c", "curl -LsSf https://astral.sh/ruff/install.sh | sh"] };
     },
   },
@@ -306,24 +311,22 @@ What it does:
 `);
 }
 
-function promptUser(question) {
-  const rl = (() => {
-    try {
-      return require("node:readline").createInterface({
-        input: process.stdin,
-        output: process.stdout,
-      });
-    } catch {
-      return null;
-    }
-  })();
-  if (!rl) return true; // fallback to --force behavior if readline unavailable
-  return new Promise((resolve) => {
-    rl.question(question, (answer) => {
-      rl.close();
-      resolve(/^(y|yes|s|sim)$/i.test(answer.trim()));
+async function promptUser(question) {
+  try {
+    const readline = await import("node:readline");
+    const rl = readline.createInterface({
+      input: process.stdin,
+      output: process.stdout,
     });
-  });
+    return new Promise((resolve) => {
+      rl.question(question, (answer) => {
+        rl.close();
+        resolve(/^(y|yes|s|sim)$/i.test(answer.trim()));
+      });
+    });
+  } catch {
+    return true; // fallback to --force behavior if readline unavailable
+  }
 }
 
 async function main() {
