@@ -158,11 +158,12 @@ fi
 if ! command -v rtk >/dev/null 2>&1; then
 	echo "==> Installing rtk (Rust Token Killer)..."
 	case "$DISTRO" in
-	arch)
-		if pacman -Qi rtk >/dev/null 2>&1; then
-			echo "    rtk already installed via AUR"
+		arch)
+		if pacman -Qi rtk >/dev/null 2>&1 || pacman -Qi rtk-bin >/dev/null 2>&1; then
+			echo "    rtk already installed"
 		elif [ -n "$AUR_HELPER" ]; then
-			"$AUR_HELPER" -S --noconfirm "$AUR_EDIT_FLAG" rtk
+			# Use rtk-bin to avoid provider selection prompts (--noconfirm skips the install confirmation but not the provider choice)
+			"$AUR_HELPER" -S --noconfirm "$AUR_EDIT_FLAG" rtk-bin
 		else
 			echo "    (warn) rtk is AUR-only and no AUR helper (yay/paru) found." >&2
 			echo "    Install one, then run: yay -S rtk   or   paru -S rtk" >&2
