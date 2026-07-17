@@ -86,7 +86,7 @@
     },
     // Stricter Python type checking (basedpyright-langserver via npx -y).
     "basedpyright": {
-      "command": ["npx", "-y", "basedpyright", "basedpyright-langserver", "--stdio"],
+      "command": ["npx", "-y", "-p", "basedpyright", "basedpyright-langserver", "--stdio"],
       "extensions": [".py", ".pyi"]
     },
     // TypeScript/JavaScript (via vtsls — npx runner).
@@ -96,7 +96,7 @@
     },
     // Tailwind CSS intelligence (only activates on CSS/SCSS).
     "tailwindcss": {
-      "command": ["npx", "-y", "@tailwindcss/language-server", "--stdio"],
+      "command": ["npx", "-y", "-p", "@tailwindcss/language-server", "tailwindcss-language-server", "--stdio"],
       "extensions": [".css", ".scss"]
     },
     // Emmet abbreviations in HTML/CSS.
@@ -107,7 +107,7 @@
     // ESLint LSP (official, extracted from the VS Code ESLint extension).
     // Replaces the built-in eslint LSP to avoid duplicate diagnostics.
     "eslint-lsp": {
-      "command": ["npx", "-y", "vscode-langservers-extracted", "vscode-eslint-language-server", "--stdio"],
+      "command": ["npx", "-y", "-p", "vscode-langservers-extracted", "vscode-eslint-language-server", "--stdio"],
       "extensions": [".js", ".jsx", ".ts", ".tsx", ".mjs", ".cjs"]
     },
     // Bash/Shell scripting.
@@ -117,7 +117,7 @@
     },
     // Dockerfile support (via npx runner).
     "docker-langserver": {
-      "command": ["npx", "-y", "dockerfile-language-server", "--stdio"],
+      "command": ["npx", "-y", "dockerfile-language-server-nodejs", "--stdio"],
       "extensions": ["Dockerfile", ".dockerfile"]
     },
     // YAML configuration files (general YAML support).
@@ -127,22 +127,22 @@
     },
     // JSON/JSONC support (via npx runner).
     "vscode-json-language-server": {
-      "command": ["npx", "-y", "vscode-langservers-extracted", "vscode-json-language-server", "--stdio"],
+      "command": ["npx", "-y", "-p", "vscode-langservers-extracted", "vscode-json-language-server", "--stdio"],
       "extensions": [".json", ".jsonc"]
     },
     // HTML support (via npx runner).
     "vscode-html-language-server": {
-      "command": ["npx", "-y", "vscode-langservers-extracted", "vscode-html-language-server", "--stdio"],
+      "command": ["npx", "-y", "-p", "vscode-langservers-extracted", "vscode-html-language-server", "--stdio"],
       "extensions": [".html", ".htm"]
     },
     // CSS/SCSS/LESS support (via npx runner).
     "vscode-css-language-server": {
-      "command": ["npx", "-y", "vscode-langservers-extracted", "vscode-css-language-server", "--stdio"],
+      "command": ["npx", "-y", "-p", "vscode-langservers-extracted", "vscode-css-language-server", "--stdio"],
       "extensions": [".css", ".scss", ".less"]
     },
     // Markdown support (via npx runner).
     "vscode-markdown-language-server": {
-      "command": ["npx", "-y", "vscode-langservers-extracted", "vscode-markdown-language-server", "--stdio"],
+      "command": ["npx", "-y", "-p", "vscode-langservers-extracted", "vscode-markdown-language-server", "--stdio"],
       "extensions": [".md", ".markdown"]
     }
     // NOTE: ansible-language-server removed — overlaps with yaml-language-server.
