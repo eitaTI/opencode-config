@@ -280,14 +280,12 @@ const PREREQS_OPTIONAL = [
           args: ["-c", "$ProgressPreference='SilentlyContinue'; $v='0.43.0'; $url=\"https://github.com/rtk-ai/rtk/releases/download/v$v/rtk-x86_64-pc-windows-msvc.zip\"; Invoke-WebRequest -Uri $url -OutFile \"$env:TEMP\\rtk.zip\"; Add-Type -AssemblyName System.IO.Compression.FileSystem; if (Test-Path \"$env:USERPROFILE\\.local\\bin\\rtk.exe\") { Remove-Item \"$env:USERPROFILE\\.local\\bin\\rtk.exe\" -Force }; [System.IO.Compression.ZipFile]::ExtractToDirectory(\"$env:TEMP\\rtk.zip\", \"$env:USERPROFILE\\.local\\bin\"); if ($env:PATH -notmatch [regex]::Escape($env:USERPROFILE+'\\.local\\bin')) { [Environment]::SetEnvironmentVariable('PATH', $env:PATH+';'+$env:USERPROFILE+'\\.local\\bin', 'User') }"],
         };
       }
-      // Arch/CachyOS: prefer pacman/AUR (rtk is in [extra]) over standalone installer
-      if (isArchBased()) return { cmd: "sudo", args: ["pacman", "-S", "--noconfirm", "rtk"] };
+      // Arch/CachyOS: rtk is AUR-only (aur/rtk), install via paru/yay
+      if (isArchBased()) {
+        const h = getAurHelper();
+        return h ? { cmd: h, args: aurInstallArgs("rtk") } : null;
+      }
       return { cmd: "bash", args: ["-c", "curl -fsSL https://raw.githubusercontent.com/rtk-ai/rtk/refs/heads/master/install.sh | sh"] };
-    },
-    getFallbackInstallCmds() {
-      if (!isArchBased()) return [];
-      const h = getAurHelper();
-      return h ? [{ cmd: h, args: aurInstallArgs("rtk") }] : [];
     },
   },
 ];

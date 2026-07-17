@@ -160,15 +160,12 @@ if ! command -v rtk >/dev/null 2>&1; then
 	case "$DISTRO" in
 	arch)
 		if pacman -Qi rtk >/dev/null 2>&1; then
-			echo "    rtk already installed via pacman"
-		elif sudo pacman -S --noconfirm rtk; then
-			echo "    rtk installed via pacman"
+			echo "    rtk already installed via AUR"
 		elif [ -n "$AUR_HELPER" ]; then
-			echo "    pacman failed, trying AUR helper ($AUR_HELPER)..."
 			"$AUR_HELPER" -S --noconfirm "$AUR_EDIT_FLAG" rtk
 		else
-			echo "    (warn) Could not install rtk — install manually:" >&2
-			echo "    sudo pacman -S rtk   (or install an AUR helper: yay/paru)" >&2
+			echo "    (warn) rtk is AUR-only and no AUR helper (yay/paru) found." >&2
+			echo "    Install one, then run: yay -S rtk   or   paru -S rtk" >&2
 		fi
 		;;
 	*)
