@@ -15,6 +15,9 @@ import { fileURLToPath } from "node:url";
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const REPO_ROOT = path.resolve(__dirname, "..");
 
+const PKG = JSON.parse(fs.readFileSync(path.join(REPO_ROOT, "package.json"), "utf8"));
+const VERSION = PKG.version;
+
 const SOURCE_ITEMS = ["opencode.jsonc", "plugins", "skills", "commands", "docs", "AGENTS.md"];
 
 // ---------------------------------------------------------------------------
@@ -66,9 +69,10 @@ function which(cmd) {
 
 function runCommand(cmd, args, opts = {}) {
   log(`Running: ${cmd} ${args.join(" ")}`);
-  const r = spawnSync(cmd, args, { stdio: "inherit", ...opts });
+  const r = spawnSync(cmd, args, { stdio: ["inherit", "pipe", "pipe"], ...opts });
+  const out = (r.stdout ? r.stdout.toString() : "") + (r.stderr ? r.stderr.toString() : "");
   if (r.error) throw r.error;
-  return r.status === 0;
+  return { ok: r.status === 0, out };
 }
 
 function copyRecursive(src, dest) {
@@ -253,7 +257,7 @@ const PREREQS_CORE = [
     getFallbackInstallCmds() {
       if (!isArchBased()) return [];
       const h = getAurHelper();
-      return h ? [{ cmd: h, args: ["-S", "--noconfirm", "--noedit", "python-ruff"] }] : [];
+      return h ? [{ cmd: h, args: aurInstallArgs("python-ruff") }] : [];
     },
   },
 ];
@@ -284,6 +288,25 @@ function getAurHelper() {
   if (which("yay")) return "yay";
   if (which("paru")) return "paru";
   return null;
+}
+
+// Build AUR helper install args with the correct "skip edit" flag.
+// `paru` accepts `--noedit`; `yay` requires `--noeditmenu`.
+function aurInstallArgs(pkg) {
+  const h = getAurHelper();
+  const editFlag = h === "yay" ? "--noeditmenu" : "--noedit";
+  return ["-S", "--noconfirm", editFlag, pkg];
+}
+
+// Refresh pacman's package databases (helps when a stale/cached DB points at
+// files that no longer resolve on the configured mirrors).
+function refreshPacman() {
+  try {
+    log("Refreshing pacman databases (sudo pacman -Sy)...");
+    runCommand("sudo", ["pacman", "-Sy"]);
+  } catch {
+    // Non-fatal: the install attempt below will surface any real errors.
+  }
 }
 
 // Re-expose node/npm on PATH when they were just installed via FNM/nvm
@@ -370,7 +393,7 @@ const LSP_SERVERS = [
     note: "TypeScript/JavaScript LSP (vtsls --stdio)",
     getInstallCmd() {
       const aur = getAurHelper();
-      if (isArchBased()) return aur ? { cmd: aur, args: ["-S", "--noconfirm", "--noedit", "vtsls"] } : null;
+      if (isArchBased()) return aur ? { cmd: aur, args: aurInstallArgs("vtsls") } : null;
       return { cmd: "npm", args: ["i", "-g", "@vtsls/language-server"] };
     },
   },
@@ -384,7 +407,7 @@ const LSP_SERVERS = [
     getFallbackInstallCmds() {
       if (!isArchBased()) return [];
       const h = getAurHelper();
-      return h ? [{ cmd: h, args: ["-S", "--noconfirm", "--noedit", "bash-language-server"] }] : [];
+      return h ? [{ cmd: h, args: aurInstallArgs("bash-language-server") }] : [];
     },
   },
   {
@@ -397,7 +420,7 @@ const LSP_SERVERS = [
     getFallbackInstallCmds() {
       if (!isArchBased()) return [];
       const h = getAurHelper();
-      return h ? [{ cmd: h, args: ["-S", "--noconfirm", "--noedit", "yaml-language-server"] }] : [];
+      return h ? [{ cmd: h, args: aurInstallArgs("yaml-language-server") }] : [];
     },
   },
   {
@@ -407,7 +430,7 @@ const LSP_SERVERS = [
     note: "VS Code LSPs: json/html/css/markdown (vscode-*-language-server)",
     getInstallCmd() {
       const aur = getAurHelper();
-      if (isArchBased()) return aur ? { cmd: aur, args: ["-S", "--noconfirm", "--noedit", "vscode-langservers-extracted"] } : null;
+      if (isArchBased()) return aur ? { cmd: aur, args: aurInstallArgs("vscode-langservers-extracted") } : null;
       return { cmd: "npm", args: ["i", "-g", "vscode-langservers-extracted"] };
     },
   },
@@ -416,7 +439,7 @@ const LSP_SERVERS = [
     note: "Dockerfile LSP (docker-langserver --stdio)",
     getInstallCmd() {
       const aur = getAurHelper();
-      if (isArchBased()) return aur ? { cmd: aur, args: ["-S", "--noconfirm", "--noedit", "docker-language-server"] } : null;
+      if (isArchBased()) return aur ? { cmd: aur, args: aurInstallArgs("docker-language-server") } : null;
       return { cmd: "npm", args: ["i", "-g", "dockerfile-language-server-nodejs"] };
     },
   },
@@ -454,10 +477,13 @@ async function autoInstall(missing) {
     }
 
     let installed = false;
+    let lastOut = "";
     for (const installCmd of attempts) {
       log(`Installing ${p.name} (${installCmd.cmd} ${installCmd.args.join(" ")})...`);
       try {
-        if (runCommand(installCmd.cmd, installCmd.args)) {
+        const { ok, out } = runCommand(installCmd.cmd, installCmd.args);
+        lastOut = out;
+        if (ok) {
           log(`${p.name} installed successfully`);
           installed = true;
           break;
@@ -467,7 +493,28 @@ async function autoInstall(missing) {
         warn(`Error installing ${p.name}: ${err.message}`);
       }
     }
-    if (!installed) warn(`Failed to install ${p.name} — install manually`);
+
+    if (installed) continue;
+
+    // Diagnostic: detect a broken-mirror / missing-signature failure (Arch) and
+    // point the user at the real, environmental fix instead of failing silently.
+    if (/falha ao obter|\.sig|404|failed to retrieve|signature|GPG|corrupted|unable to verify/i.test(lastOut)) {
+      console.error(`
+  (warn) Detected a package download / signature failure — most likely a broken
+  or out-of-sync pacman mirror (e.g. a 404 on a *.pkg.tar.zst.sig). This is an
+  environment issue, not a bug in this installer. Fix your mirror/keyring setup,
+  then re-run:
+
+    sudo pacman -Syy                 # force-refresh package databases
+    sudo pacman-key --refresh-keys   # refresh signing keys
+    # and/or regenerate your mirrorlist, e.g. on CachyOS:
+    sudo cachyos-rate-mirrors        # or: sudo reflector --latest 10 --sort rate --save /etc/pacman.d/mirrorlist
+
+  Then retry:  npx -y github:EitaTI/opencode-config
+`);
+    } else {
+      warn(`Failed to install ${p.name} — install manually`);
+    }
   }
 }
 
@@ -528,6 +575,7 @@ async function promptUser(question) {
 
 async function main() {
   const args = process.argv.slice(2);
+  console.log(`==> EitaTI OpenCode config installer v${VERSION}`);
   if (args.includes("-h") || args.includes("--help")) return printHelp();
   const dry = args.includes("--dry-run");
   const clean = args.includes("--clean");
@@ -547,6 +595,9 @@ async function main() {
       process.exit(1);
     } else {
       log(`Missing core prerequisites: ${core.map((p) => p.name).join(", ")}`);
+      // On Arch, a stale/out-of-sync DB can make a perfectly valid package
+      // fail to resolve/verify — refresh once before attempting installs.
+      if (isArchBased()) refreshPacman();
       await autoInstall(core);
       refreshPath();
       if (isWin) {

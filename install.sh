@@ -44,6 +44,9 @@ fi
 SRC="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 DEST="${XDG_CONFIG_HOME:-$HOME/.config}/opencode"
 
+VERSION="$(grep -m1 '"version"' "$SRC/package.json" | sed -E 's/.*"version"[[:space:]]*:[[:space:]]*"([^"]+)".*/\1/')"
+echo "==> EitaTI OpenCode config installer v$VERSION"
+
 DISTRO=$(detect_distro)
 
 # --- Node.js (single runner for MCP servers + plugins) ---
@@ -93,6 +96,15 @@ else
 	echo "==> Node.js already present: $(node --version)"
 fi
 
+# --- AUR helper (yay|paru) detection ---
+# Used as a fallback when pacman fails (e.g. a broken mirror). `paru` accepts
+# `--noedit`; `yay` requires `--noeditmenu`.
+AUR_HELPER=""
+if command -v yay >/dev/null 2>&1; then AUR_HELPER="yay";
+elif command -v paru >/dev/null 2>&1; then AUR_HELPER="paru"; fi
+AUR_EDIT_FLAG="--noedit"
+[ "$AUR_HELPER" = "yay" ] && AUR_EDIT_FLAG="--noeditmenu"
+
 # --- ruff (Python LSP + formatter) ---
 # Python linter + formatter written in Rust. On Arch/CachyOS the package is
 # named `python-ruff` (it provides the `ruff` binary). Installed via pacman,
@@ -106,14 +118,20 @@ if ! command -v ruff >/dev/null 2>&1; then
 	arch)
 		if pacman -Qi python-ruff >/dev/null 2>&1; then
 			echo "    ruff already installed via pacman (python-ruff)"
-		elif sudo pacman -S --noconfirm python-ruff; then
-			echo "    ruff installed via pacman (python-ruff)"
-		elif [ -n "$AUR_HELPER" ]; then
-			echo "    pacman failed, trying AUR helper ($AUR_HELPER)..."
-			"$AUR_HELPER" -S --noconfirm --noedit python-ruff
 		else
-			echo "    (warn) Could not install ruff via pacman or AUR — install manually:" >&2
-			echo "    sudo pacman -S python-ruff   (or install an AUR helper: yay/paru)" >&2
+			echo "    Refreshing pacman databases (sudo pacman -Sy)..."
+			sudo pacman -Sy || echo "    (warn) pacman -Sy failed; continuing..."
+			if sudo pacman -S --noconfirm python-ruff; then
+				echo "    ruff installed via pacman (python-ruff)"
+			elif [ -n "$AUR_HELPER" ]; then
+				echo "    pacman failed, trying AUR helper ($AUR_HELPER)..."
+				"$AUR_HELPER" -S --noconfirm "$AUR_EDIT_FLAG" python-ruff
+			else
+				echo "    (warn) Could not install ruff via pacman or AUR — install manually:" >&2
+				echo "    sudo pacman -S python-ruff   (or install an AUR helper: yay/paru)" >&2
+				echo "    If the failure is a 404 on a *.pkg.tar.zst.sig, your mirror is broken:" >&2
+				echo "    sudo pacman -Syy && sudo pacman-key --refresh-keys" >&2
+			fi
 		fi
 		;;
 	*)
@@ -150,9 +168,7 @@ fi
 # LSPs run via `npx -y` (basedpyright, tailwindcss, emmet, eslint) need no install.
 # On Arch/CachyOS prefer pacman/AUR (yay|paru) over `npm i -g`,
 # which writes outside pacman's control and can break system updates.
-AUR_HELPER=""
-if command -v yay >/dev/null 2>&1; then AUR_HELPER="yay";
-elif command -v paru >/dev/null 2>&1; then AUR_HELPER="paru"; fi
+# (AUR_HELPER / AUR_EDIT_FLAG are detected earlier, before the ruff step.)
 
 # install_lsp <binary> <pacman-pkg> <aur-pkg> <npm-pkg>
 # On Arch/CachyOS, installs stay exclusive to pacman/AUR (yay|paru) — never npm.
@@ -168,11 +184,11 @@ install_lsp() {
     if [ -n "$pac" ]; then
       sudo pacman -S --noconfirm "$pac"
     elif [ -n "$AUR_HELPER" ] && [ -n "$aur" ]; then
-      "$AUR_HELPER" -S --noconfirm --noedit "$aur"
+      "$AUR_HELPER" -S --noconfirm "$AUR_EDIT_FLAG" "$aur"
     else
       echo "    (warn) $bin has no pacman package and no AUR helper (yay/paru) on this system." >&2
       if [ -n "$aur" ]; then
-        echo "    Install an AUR helper then run: $AUR_HELPER -S --noedit $aur" >&2
+        echo "    Install an AUR helper then run: $AUR_HELPER -S $AUR_EDIT_FLAG $aur" >&2
       else
         echo "    No Arch package available for $bin — install manually." >&2
       fi
