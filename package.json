@@ -1,6 +1,6 @@
 {
   "name": "opencode-eita-config",
-  "version": "1.10.2",
+  "version": "1.10.3",
   "description": "EitaTI global OpenCode config (LSP, MCP, plugins, skills) with a cross-platform one-command installer.",
   "type": "module",
   "bin": {

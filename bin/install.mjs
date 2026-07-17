@@ -68,7 +68,6 @@ function which(cmd) {
 }
 
 function runCommand(cmd, args, opts = {}) {
-  log(`Running: ${cmd} ${args.join(" ")}`);
   const r = spawnSync(cmd, args, { stdio: ["inherit", "pipe", "pipe"], ...opts });
   const out = (r.stdout ? r.stdout.toString() : "") + (r.stderr ? r.stderr.toString() : "");
   if (r.error) throw r.error;
@@ -152,6 +151,13 @@ function hasExistingConfig(target) {
   if (!fs.existsSync(target)) return false;
   const items = fs.readdirSync(target);
   return items.some((f) => SOURCE_ITEMS.includes(f));
+}
+
+// true if target contains files not managed by this installer (user's own config)
+function hasForeignFiles(target) {
+  if (!fs.existsSync(target)) return false;
+  const items = fs.readdirSync(target);
+  return items.some((f) => !SOURCE_ITEMS.includes(f) && !f.endsWith(".backup-") && f !== "node_modules");
 }
 
 // ---------------------------------------------------------------------------
@@ -274,14 +280,22 @@ const PREREQS_OPTIONAL = [
           args: ["-c", "$ProgressPreference='SilentlyContinue'; $v='0.43.0'; $url=\"https://github.com/rtk-ai/rtk/releases/download/v$v/rtk-x86_64-pc-windows-msvc.zip\"; Invoke-WebRequest -Uri $url -OutFile \"$env:TEMP\\rtk.zip\"; Add-Type -AssemblyName System.IO.Compression.FileSystem; if (Test-Path \"$env:USERPROFILE\\.local\\bin\\rtk.exe\") { Remove-Item \"$env:USERPROFILE\\.local\\bin\\rtk.exe\" -Force }; [System.IO.Compression.ZipFile]::ExtractToDirectory(\"$env:TEMP\\rtk.zip\", \"$env:USERPROFILE\\.local\\bin\"); if ($env:PATH -notmatch [regex]::Escape($env:USERPROFILE+'\\.local\\bin')) { [Environment]::SetEnvironmentVariable('PATH', $env:PATH+';'+$env:USERPROFILE+'\\.local\\bin', 'User') }"],
         };
       }
+      // Arch/CachyOS: prefer pacman/AUR (rtk is in [extra]) over standalone installer
+      if (isArchBased()) return { cmd: "sudo", args: ["pacman", "-S", "--noconfirm", "rtk"] };
       return { cmd: "bash", args: ["-c", "curl -fsSL https://raw.githubusercontent.com/rtk-ai/rtk/refs/heads/master/install.sh | sh"] };
+    },
+    getFallbackInstallCmds() {
+      if (!isArchBased()) return [];
+      const h = getAurHelper();
+      return h ? [{ cmd: h, args: aurInstallArgs("rtk") }] : [];
     },
   },
 ];
 
-// LSPs invoked *directly* by opencode.jsonc (need a real binary on PATH).
-// LSPs run via `npx -y` (basedpyright, tailwindcss, emmet, eslint-lsp)
-// are downloaded on demand and are intentionally excluded here.
+// LSPs invoked *directly* by opencode.jsonc that need a real binary on PATH.
+// LSPs run via `npx -y` (basedpyright, tailwindcss, emmet, eslint-lsp,
+// vtsls, docker-langserver, vscode-*) are downloaded on demand and
+// intentionally excluded here.
 // On Arch/CachyOS we prefer pacman/AUR (yay|paru) over `npm i -g`,
 // which writes outside pacman's control and can break system updates.
 function getAurHelper() {
@@ -302,8 +316,8 @@ function aurInstallArgs(pkg) {
 // files that no longer resolve on the configured mirrors).
 function refreshPacman() {
   try {
-    log("Refreshing pacman databases (sudo pacman -Sy)...");
-    runCommand("sudo", ["pacman", "-Sy"]);
+    const r = spawnSync("sudo", ["pacman", "-Sy"], { stdio: ["inherit", "pipe", "pipe"] });
+    if (r.status !== 0) warn("pacman -Sy failed; continuing...");
   } catch {
     // Non-fatal: the install attempt below will surface any real errors.
   }
@@ -389,15 +403,6 @@ function configureWindowsGit() {
 
 const LSP_SERVERS = [
   {
-    name: "vtsls",
-    note: "TypeScript/JavaScript LSP (vtsls --stdio)",
-    getInstallCmd() {
-      const aur = getAurHelper();
-      if (isArchBased()) return aur ? { cmd: aur, args: aurInstallArgs("vtsls") } : null;
-      return { cmd: "npm", args: ["i", "-g", "@vtsls/language-server"] };
-    },
-  },
-  {
     name: "bash-language-server",
     note: "Bash/Shell LSP (bash-language-server start)",
     getInstallCmd() {
@@ -423,26 +428,6 @@ const LSP_SERVERS = [
       return h ? [{ cmd: h, args: aurInstallArgs("yaml-language-server") }] : [];
     },
   },
-  {
-    // Binary check covers all four VS Code extracted servers
-    // (json/html/css/markdown) provided by this one package.
-    name: "vscode-markdown-language-server",
-    note: "VS Code LSPs: json/html/css/markdown (vscode-*-language-server)",
-    getInstallCmd() {
-      const aur = getAurHelper();
-      if (isArchBased()) return aur ? { cmd: aur, args: aurInstallArgs("vscode-langservers-extracted") } : null;
-      return { cmd: "npm", args: ["i", "-g", "vscode-langservers-extracted"] };
-    },
-  },
-  {
-    name: "docker-langserver",
-    note: "Dockerfile LSP (docker-langserver --stdio)",
-    getInstallCmd() {
-      const aur = getAurHelper();
-      if (isArchBased()) return aur ? { cmd: aur, args: aurInstallArgs("docker-language-server") } : null;
-      return { cmd: "npm", args: ["i", "-g", "dockerfile-language-server-nodejs"] };
-    },
-  },
 ];
 
 function checkLSPs() {
@@ -456,64 +441,54 @@ function checkPrerequisites() {
 }
 
 function printPrerequisiteHelp(missing, label) {
-  const osLabel = isWin ? "Windows" : isArchBased() ? "Arch-based Linux" : "macOS / Linux";
-  console.log(`
-${label} tool(s) missing (${osLabel}):
-`);
-  for (const p of missing) {
-    const installCmd = p.getInstallCmd();
-    const cmdStr = installCmd ? `${installCmd.cmd} ${installCmd.args.join(" ")}` : "manual install required";
-    console.log(`  ${p.name} — ${p.note}`);
-    console.log(`    ${cmdStr}`);
-  }
+  console.log(`\n  ${label}:`);
+  for (const p of missing) console.log(`    ${p.name} — ${p.note}`);
+}
+
+// Return the last N lines of a string.
+function tailLines(str, n = 12) {
+  const lines = str.trim().split("\n");
+  return lines.slice(-n).join("\n");
 }
 
 async function autoInstall(missing) {
   for (const p of missing) {
     const attempts = [p.getInstallCmd(), ...(p.getFallbackInstallCmds ? p.getFallbackInstallCmds() : [])].filter(Boolean);
     if (attempts.length === 0) {
-      warn(`No auto-install command available for ${p.name} — install manually`);
+      console.log(`  ${p.name} — no auto-install available (manual)`);
       continue;
     }
 
     let installed = false;
     let lastOut = "";
     for (const installCmd of attempts) {
-      log(`Installing ${p.name} (${installCmd.cmd} ${installCmd.args.join(" ")})...`);
       try {
         const { ok, out } = runCommand(installCmd.cmd, installCmd.args);
         lastOut = out;
-        if (ok) {
-          log(`${p.name} installed successfully`);
-          installed = true;
-          break;
-        }
-        warn(`Install via ${installCmd.cmd} failed — trying next option...`);
+        if (ok) { installed = true; break; }
       } catch (err) {
-        warn(`Error installing ${p.name}: ${err.message}`);
+        lastOut = err.message;
       }
     }
 
-    if (installed) continue;
+    if (installed) {
+      console.log(`  ${p.name} — ok`);
+      continue;
+    }
 
-    // Diagnostic: detect a broken-mirror / missing-signature failure (Arch) and
-    // point the user at the real, environmental fix instead of failing silently.
+    // Diagnostic: detect a broken-mirror / missing-signature failure (Arch)
     if (/falha ao obter|\.sig|404|failed to retrieve|signature|GPG|corrupted|unable to verify/i.test(lastOut)) {
-      console.error(`
-  (warn) Detected a package download / signature failure — most likely a broken
-  or out-of-sync pacman mirror (e.g. a 404 on a *.pkg.tar.zst.sig). This is an
-  environment issue, not a bug in this installer. Fix your mirror/keyring setup,
-  then re-run:
+      console.log(`  ${p.name} — FAIL (broken mirror / missing .sig)`);
+      console.log(`
+  Fix your mirror/keyring, then re-run:
 
-    sudo pacman -Syy                 # force-refresh package databases
-    sudo pacman-key --refresh-keys   # refresh signing keys
-    # and/or regenerate your mirrorlist, e.g. on CachyOS:
-    sudo cachyos-rate-mirrors        # or: sudo reflector --latest 10 --sort rate --save /etc/pacman.d/mirrorlist
-
-  Then retry:  npx -y github:EitaTI/opencode-config
+    sudo pacman -Syy && sudo pacman-key --refresh-keys
+    sudo cachyos-rate-mirrors    # or: sudo reflector --latest 10 --sort rate --save /etc/pacman.d/mirrorlist
+    npx -y github:EitaTI/opencode-config
 `);
     } else {
-      warn(`Failed to install ${p.name} — install manually`);
+      console.log(`  ${p.name} — FAIL`);
+      if (lastOut.trim()) console.log(`    ${tailLines(lastOut, 6).split("\n").join("\n    ")}`);
     }
   }
 }
@@ -541,11 +516,12 @@ What it does:
       Git for Windows is installed via winget and its GNU tools (grep/head/tail)
       are exposed on PATH so the config works inside pwsh.
    3. Auto-installs missing LSP servers invoked directly by the config
-      (vtsls, bash/yaml, vscode-*, docker-langserver) — respecting
+      (bash-language-server, yaml-language-server) — respecting
       pacman/AUR (yay|paru) on Arch, npm -g elsewhere.
-  3. If target dir has existing config, prompts for confirmation (or --force).
-  4. Creates a timestamped backup before overwriting.
-  5. Copies config files to ~/.config/opencode.
+      Other LSPs (vtsls, docker, vscode-*) run via npx -y (zero-install).
+   4. If target dir has existing config with foreign files, prompts for
+      confirmation (or --force). Re-running with only our files relinks silently.
+   5. Copies config files to ~/.config/opencode.
 
   With --clean, removes everything without reinstalling:
   - Config files (opencode.jsonc, skills/, commands/, docs/, AGENTS.md)
@@ -608,8 +584,9 @@ async function main() {
       // Re-check after install
       const stillMissing = PREREQS_CORE.filter((p) => !which(p.name));
       if (stillMissing.length) {
-        printPrerequisiteHelp(stillMissing, "Still missing");
-        console.error("\nAuto-install failed for the tools above. Install manually, then re-run.");
+        console.error("\n  Install manually, then re-run:");
+        for (const p of stillMissing) console.error(`    ${p.name} — ${p.note}`);
+        if (isArchBased()) console.error("    Arch: sudo pacman -S python-ruff");
         process.exit(1);
       }
     }
@@ -640,8 +617,9 @@ async function main() {
       await autoInstall(lsps);
       const stillMissing = LSP_SERVERS.filter((p) => !which(p.name));
       if (stillMissing.length) {
-        printPrerequisiteHelp(stillMissing, "LSP servers still missing");
-        console.error("\nAuto-install failed for the LSP servers above. Install manually, then re-run.");
+        console.log("\n  Install manually, then re-run:");
+        for (const p of stillMissing) console.log(`    ${p.name} — ${p.note}`);
+        if (isArchBased()) console.log("    Arch: sudo pacman -S bash-language-server yaml-language-server");
       }
     }
   }
@@ -667,13 +645,17 @@ To reinstall, run:
 
   // Check for existing config and handle overwriting.
   if (!dry && hasExistingConfig(target) && !force) {
-    warn(`Target directory already has OpenCode config: ${target}`);
-    const answer = await promptUser("Overwrite existing config? (y/N) ");
-    if (!answer) {
-      console.log("Aborted. Use --force to overwrite without prompting.");
-      process.exit(0);
+    if (hasForeignFiles(target)) {
+      warn(`Target directory has config plus other files: ${target}`);
+      const answer = await promptUser("Overwrite existing config? (y/N) ");
+      if (!answer) {
+        console.log("Aborted. Use --force to overwrite without prompting.");
+        process.exit(0);
+      }
+      backupTarget(target);
+    } else {
+      // Idempotent re-run: relink silently, no prompt needed.
     }
-    backupTarget(target);
   }
 
   for (const item of SOURCE_ITEMS) {

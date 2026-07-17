@@ -89,9 +89,9 @@
       "command": ["npx", "-y", "basedpyright", "basedpyright-langserver", "--stdio"],
       "extensions": [".py", ".pyi"]
     },
-    // TypeScript/JavaScript (via vtsls).
+    // TypeScript/JavaScript (via vtsls — npx runner).
     "vtsls": {
-      "command": ["vtsls", "--stdio"],
+      "command": ["npx", "-y", "@vtsls/language-server", "--stdio"],
       "extensions": [".ts", ".tsx", ".js", ".jsx"]
     },
     // Tailwind CSS intelligence (only activates on CSS/SCSS).
@@ -115,9 +115,9 @@
       "command": ["bash-language-server", "start"],
       "extensions": [".sh", ".bash"]
     },
-    // Dockerfile support.
+    // Dockerfile support (via npx runner).
     "docker-langserver": {
-      "command": ["docker-langserver", "--stdio"],
+      "command": ["npx", "-y", "dockerfile-language-server", "--stdio"],
       "extensions": ["Dockerfile", ".dockerfile"]
     },
     // YAML configuration files (general YAML support).
@@ -125,24 +125,24 @@
       "command": ["yaml-language-server", "--stdio"],
       "extensions": [".yaml", ".yml"]
     },
-    // JSON/JSONC support.
+    // JSON/JSONC support (via npx runner).
     "vscode-json-language-server": {
-      "command": ["vscode-json-language-server", "--stdio"],
+      "command": ["npx", "-y", "vscode-langservers-extracted", "vscode-json-language-server", "--stdio"],
       "extensions": [".json", ".jsonc"]
     },
-    // HTML support.
+    // HTML support (via npx runner).
     "vscode-html-language-server": {
-      "command": ["vscode-html-language-server", "--stdio"],
+      "command": ["npx", "-y", "vscode-langservers-extracted", "vscode-html-language-server", "--stdio"],
       "extensions": [".html", ".htm"]
     },
-    // CSS/SCSS/LESS support.
+    // CSS/SCSS/LESS support (via npx runner).
     "vscode-css-language-server": {
-      "command": ["vscode-css-language-server", "--stdio"],
+      "command": ["npx", "-y", "vscode-langservers-extracted", "vscode-css-language-server", "--stdio"],
       "extensions": [".css", ".scss", ".less"]
     },
-    // Markdown support.
+    // Markdown support (via npx runner).
     "vscode-markdown-language-server": {
-      "command": ["vscode-markdown-language-server", "--stdio"],
+      "command": ["npx", "-y", "vscode-langservers-extracted", "vscode-markdown-language-server", "--stdio"],
       "extensions": [".md", ".markdown"]
     }
     // NOTE: ansible-language-server removed — overlaps with yaml-language-server.

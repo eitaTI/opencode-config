@@ -157,15 +157,32 @@ fi
 # Single Rust binary, zero dependencies.
 if ! command -v rtk >/dev/null 2>&1; then
 	echo "==> Installing rtk (Rust Token Killer)..."
-	curl -fsSL https://raw.githubusercontent.com/rtk-ai/rtk/refs/heads/master/install.sh | sh
+	case "$DISTRO" in
+	arch)
+		if pacman -Qi rtk >/dev/null 2>&1; then
+			echo "    rtk already installed via pacman"
+		elif sudo pacman -S --noconfirm rtk; then
+			echo "    rtk installed via pacman"
+		elif [ -n "$AUR_HELPER" ]; then
+			echo "    pacman failed, trying AUR helper ($AUR_HELPER)..."
+			"$AUR_HELPER" -S --noconfirm "$AUR_EDIT_FLAG" rtk
+		else
+			echo "    (warn) Could not install rtk — install manually:" >&2
+			echo "    sudo pacman -S rtk   (or install an AUR helper: yay/paru)" >&2
+		fi
+		;;
+	*)
+		curl -fsSL https://raw.githubusercontent.com/rtk-ai/rtk/refs/heads/master/install.sh | sh
+		;;
+	esac
 else
 	echo "==> rtk already present: $(rtk --version)"
 fi
 
 # --- LSPs invoked *directly* by opencode.jsonc ---
-# (vtsls, bash-language-server, yaml-language-server,
-#  vscode-{json,html,css,markdown}-language-server, docker-langserver)
-# LSPs run via `npx -y` (basedpyright, tailwindcss, emmet, eslint) need no install.
+# (bash-language-server, yaml-language-server)
+# LSPs run via `npx -y` (vtsls, docker, vscode-*, basedpyright,
+# tailwindcss, emmet, eslint-lsp) need no install.
 # On Arch/CachyOS prefer pacman/AUR (yay|paru) over `npm i -g`,
 # which writes outside pacman's control and can break system updates.
 # (AUR_HELPER / AUR_EDIT_FLAG are detected earlier, before the ruff step.)
@@ -199,11 +216,8 @@ install_lsp() {
 }
 
 #            binary                     pacman                    AUR                          npm
-install_lsp vtsls                      ""                        vtsls                        @vtsls/language-server
 install_lsp bash-language-server       bash-language-server      ""                           bash-language-server
 install_lsp yaml-language-server       yaml-language-server      ""                           yaml-language-server
-install_lsp vscode-markdown-language-server ""                   vscode-langservers-extracted vscode-langservers-extracted
-install_lsp docker-langserver         ""                        docker-language-server         dockerfile-language-server-nodejs
 
 # Se o Node foi instalado via FNM/nvm nesta mesma execução, o `npm`
 # pode não estar no PATH do shell atual — disponibiliza antes do `npm i -g`.
