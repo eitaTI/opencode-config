@@ -155,23 +155,19 @@ fi
 # --- rtk (Rust Token Killer) ---
 # Reduces LLM token consumption by 60-90% by filtering shell command output.
 # Single Rust binary, zero dependencies.
+# On Arch, rtk is AUR-only and requires interactive sudo — cannot be
+# auto-installed. Print the manual command instead.
 if ! command -v rtk >/dev/null 2>&1; then
-	echo "==> Installing rtk (Rust Token Killer)..."
 	case "$DISTRO" in
 		arch)
-		if pacman -Qi rtk >/dev/null 2>&1 || pacman -Qi rtk-bin >/dev/null 2>&1; then
-			echo "    rtk already installed"
-		elif [ -n "$AUR_HELPER" ]; then
-			# Use rtk-bin to avoid provider selection prompts (--noconfirm skips the install confirmation but not the provider choice)
-			"$AUR_HELPER" -S --noconfirm "$AUR_EDIT_FLAG" rtk-bin
-		else
-			echo "    (warn) rtk is AUR-only and no AUR helper (yay/paru) found." >&2
-			echo "    Install one, then run: yay -S rtk   or   paru -S rtk" >&2
-		fi
-		;;
-	*)
-		curl -fsSL https://raw.githubusercontent.com/rtk-ai/rtk/refs/heads/master/install.sh | sh
-		;;
+			aur_cmd="${AUR_HELPER:-paru}"
+			echo "==> rtk: install manually (AUR requires interactive sudo):"
+			echo "    $aur_cmd -S --skipreview rtk-bin"
+			;;
+		*)
+			echo "==> Installing rtk (Rust Token Killer)..."
+			curl -fsSL https://raw.githubusercontent.com/rtk-ai/rtk/refs/heads/master/install.sh | sh
+			;;
 	esac
 else
 	echo "==> rtk already present: $(rtk --version)"

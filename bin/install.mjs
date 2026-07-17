@@ -280,13 +280,15 @@ const PREREQS_OPTIONAL = [
           args: ["-c", "$ProgressPreference='SilentlyContinue'; $v='0.43.0'; $url=\"https://github.com/rtk-ai/rtk/releases/download/v$v/rtk-x86_64-pc-windows-msvc.zip\"; Invoke-WebRequest -Uri $url -OutFile \"$env:TEMP\\rtk.zip\"; Add-Type -AssemblyName System.IO.Compression.FileSystem; if (Test-Path \"$env:USERPROFILE\\.local\\bin\\rtk.exe\") { Remove-Item \"$env:USERPROFILE\\.local\\bin\\rtk.exe\" -Force }; [System.IO.Compression.ZipFile]::ExtractToDirectory(\"$env:TEMP\\rtk.zip\", \"$env:USERPROFILE\\.local\\bin\"); if ($env:PATH -notmatch [regex]::Escape($env:USERPROFILE+'\\.local\\bin')) { [Environment]::SetEnvironmentVariable('PATH', $env:PATH+';'+$env:USERPROFILE+'\\.local\\bin', 'User') }"],
         };
       }
-      // Arch/CachyOS: rtk is AUR-only (aur/rtk-bin), install via paru/yay
-      // Use rtk-bin to avoid provider selection prompts (--noconfirm doesn't cover that)
-      if (isArchBased()) {
-        const h = getAurHelper();
-        return h ? { cmd: h, args: aurInstallArgs("rtk-bin") } : null;
-      }
+      // Arch/CachyOS: rtk is AUR-only and requires interactive sudo.
+      // Cannot be auto-installed — user must run the command manually.
+      if (isArchBased()) return null;
       return { cmd: "bash", args: ["-c", "curl -fsSL https://raw.githubusercontent.com/rtk-ai/rtk/refs/heads/master/install.sh | sh"] };
+    },
+    getManualCmd() {
+      if (!isArchBased()) return null;
+      const h = getAurHelper() || "paru";
+      return `${h} -S --skipreview rtk-bin`;
     },
   },
 ];
@@ -454,7 +456,8 @@ async function autoInstall(missing) {
   for (const p of missing) {
     const attempts = [p.getInstallCmd(), ...(p.getFallbackInstallCmds ? p.getFallbackInstallCmds() : [])].filter(Boolean);
     if (attempts.length === 0) {
-      console.log(`  ${p.name} — no auto-install available (manual)`);
+      const manual = p.getManualCmd ? p.getManualCmd() : null;
+      console.log(`  ${p.name} — manual install${manual ? `: ${manual}` : ""}`);
       continue;
     }
 
