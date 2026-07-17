@@ -158,7 +158,7 @@ install_lsp() {
     if [ -n "$pac" ]; then
       sudo pacman -S --noconfirm "$pac"
     elif [ -n "$AUR_HELPER" ] && [ -n "$aur" ]; then
-      "$AUR_HELPER" -S --noconfirm "$aur"
+      "$AUR_HELPER" -S --noconfirm --noedit "$aur"
     else
       npm i -g "$npm"
     fi
@@ -186,6 +186,7 @@ fi
 mkdir -p "$DEST"
 
 ln -sfn "$SRC/opencode.jsonc" "$DEST/opencode.jsonc"
+ln -sfn "$SRC/plugins" "$DEST/plugins"
 ln -sfn "$SRC/skills" "$DEST/skills"
 ln -sfn "$SRC/commands" "$DEST/commands"
 ln -sfn "$SRC/docs" "$DEST/docs"

@@ -15,7 +15,7 @@ import { fileURLToPath } from "node:url";
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const REPO_ROOT = path.resolve(__dirname, "..");
 
-const SOURCE_ITEMS = ["opencode.jsonc", "skills", "commands", "docs", "AGENTS.md"];
+const SOURCE_ITEMS = ["opencode.jsonc", "plugins", "skills", "commands", "docs", "AGENTS.md"];
 
 // ---------------------------------------------------------------------------
 // helpers
@@ -194,6 +194,36 @@ function getMacNodeInstallCmd() {
 
 const PREREQS_CORE = [
   {
+    // Windows-only: on Linux/macOS git is assumed present. On Windows we
+    // install Git for Windows (via winget) which also ships a GNU toolchain
+    // (grep/head/tail/sed/awk/ls/cat) under usr\bin — exposed on PATH so the
+    // existing Unix permission patterns + rtk keep working inside pwsh.
+    name: "git",
+    note: "version control + GNU tools (grep/head/tail/sed) used inside pwsh",
+    getInstallCmd() {
+      if (!isWin) return null;
+      if (which("winget")) {
+        return {
+          cmd: "powershell",
+          args: ["-c", "winget install Git.Git --silent --accept-package-agreements --accept-source-agreements"],
+        };
+      }
+      // Fallback: resolve latest Git for Windows release at runtime, then
+      // download + run the Inno Setup installer silently.
+      return {
+        cmd: "powershell",
+        args: ["-c",
+          "$ProgressPreference='SilentlyContinue'; " +
+          "$release = Invoke-RestMethod -Uri 'https://api.github.com/repos/git-for-windows/git/releases/latest'; " +
+          "$asset = $release.assets | Where-Object { $_.name -match '^Git-.*-64-bit\\.exe$' } | Select-Object -First 1; " +
+          "if (-not $asset) { throw 'Could not find Git for Windows 64-bit installer asset' }; " +
+          "Invoke-WebRequest -Uri $asset.browser_download_url -OutFile \"$env:TEMP\\git-install.exe\"; " +
+          "Start-Process \"$env:TEMP\\git-install.exe\" -ArgumentList '/VERYSILENT /NORESTART /NOCANCEL /SP- /CLOSEAPPLICATIONS /RESTARTAPPLICATIONS /COMPONENTS=\"icons,ext\\reg\\shellhere,assoc,assoc_sh\"' -Wait"
+        ],
+      };
+    },
+  },
+  {
     name: "node",
     note: "JavaScript runtime for npx-based MCP servers + LSP",
     getInstallCmd() {
@@ -266,13 +296,74 @@ function refreshPath() {
   }
 }
 
+// Re-read PATH from the registry (User + Machine) into the current process
+// after a Windows installer (winget) updated it — the current Node process
+// env isn't auto-refreshed.
+function refreshWindowsPath() {
+  try {
+    const r = spawnSync("powershell", ["-c",
+      "$u=[Environment]::GetEnvironmentVariable('Path','User'); " +
+      "$m=[Environment]::GetEnvironmentVariable('Path','Machine'); " +
+      "($u+';'+$m).Split(';') | Where-Object { $_ } | Select-Object -Unique"
+    ], { stdio: "pipe" });
+    const newPath = r.stdout.toString().trim();
+    if (newPath) process.env.PATH = newPath;
+  } catch {}
+}
+
+function getUserEnvPath() {
+  try {
+    const r = spawnSync("powershell", ["-c",
+      "[Environment]::GetEnvironmentVariable('Path','User')"], { stdio: "pipe" });
+    return r.stdout.toString().trim();
+  } catch {
+    return "";
+  }
+}
+
+function setUserEnvVar(name, value) {
+  try {
+    spawnSync("powershell", ["-c",
+      `[Environment]::SetEnvironmentVariable('${name}', '${value.replace(/'/g, "''")}', 'User')`
+    ], { stdio: "inherit" });
+  } catch {}
+}
+
+// After Git for Windows is installed on Windows: expose its GNU toolchain
+// (grep/head/tail/sed/awk/ls/cat under usr\bin) on the user PATH so the
+// familiar Unix command set works inside pwsh. Appended to the END of PATH
+// so it never overrides Windows built-ins (e.g. find.exe in System32).
+// Also sets OPENCODE_GIT_BASH_PATH (workaround for OpenCode issue #10871)
+// in case the user later switches to a bash shell.
+function configureWindowsGit() {
+  const programFiles = process.env.ProgramFiles || "C:\\Program Files";
+  const gitUsrBin = path.join(programFiles, "Git", "usr", "bin");
+  if (fs.existsSync(gitUsrBin)) {
+    const userPath = getUserEnvPath();
+    const entries = userPath ? userPath.split(";").filter(Boolean) : [];
+    const already = entries.some((p) => p.toLowerCase() === gitUsrBin.toLowerCase());
+    if (!already) {
+      const newPath = userPath ? `${userPath};${gitUsrBin}` : gitUsrBin;
+      setUserEnvVar("Path", newPath);
+      process.env.PATH += `;${gitUsrBin}`;
+      log(`Added Git GNU tools to PATH: ${gitUsrBin}`);
+    }
+  }
+  const bashPath = path.join(programFiles, "Git", "bin", "bash.exe");
+  if (fs.existsSync(bashPath)) {
+    setUserEnvVar("OPENCODE_GIT_BASH_PATH", bashPath);
+    process.env.OPENCODE_GIT_BASH_PATH = bashPath;
+    log(`Set OPENCODE_GIT_BASH_PATH=${bashPath}`);
+  }
+}
+
 const LSP_SERVERS = [
   {
     name: "vtsls",
     note: "TypeScript/JavaScript LSP (vtsls --stdio)",
     getInstallCmd() {
       const aur = getAurHelper();
-      if (isArchBased()) return aur ? { cmd: aur, args: ["-S", "--noconfirm", "vtsls"] } : { cmd: "npm", args: ["i", "-g", "@vtsls/language-server"] };
+      if (isArchBased()) return aur ? { cmd: aur, args: ["-S", "--noconfirm", "--noedit", "vtsls"] } : { cmd: "npm", args: ["i", "-g", "@vtsls/language-server"] };
       return { cmd: "npm", args: ["i", "-g", "@vtsls/language-server"] };
     },
   },
@@ -299,7 +390,7 @@ const LSP_SERVERS = [
     note: "VS Code LSPs: json/html/css/markdown (vscode-*-language-server)",
     getInstallCmd() {
       const aur = getAurHelper();
-      if (isArchBased()) return aur ? { cmd: aur, args: ["-S", "--noconfirm", "vscode-langservers-extracted"] } : { cmd: "npm", args: ["i", "-g", "vscode-langservers-extracted"] };
+      if (isArchBased()) return aur ? { cmd: aur, args: ["-S", "--noconfirm", "--noedit", "vscode-langservers-extracted"] } : { cmd: "npm", args: ["i", "-g", "vscode-langservers-extracted"] };
       return { cmd: "npm", args: ["i", "-g", "vscode-langservers-extracted"] };
     },
   },
@@ -308,7 +399,7 @@ const LSP_SERVERS = [
     note: "Dockerfile LSP (docker-langserver --stdio)",
     getInstallCmd() {
       const aur = getAurHelper();
-      if (isArchBased()) return aur ? { cmd: aur, args: ["-S", "--noconfirm", "docker-language-server"] } : { cmd: "npm", args: ["i", "-g", "dockerfile-language-server-nodejs"] };
+      if (isArchBased()) return aur ? { cmd: aur, args: ["-S", "--noconfirm", "--noedit", "docker-language-server"] } : { cmd: "npm", args: ["i", "-g", "dockerfile-language-server-nodejs"] };
       return { cmd: "npm", args: ["i", "-g", "dockerfile-language-server-nodejs"] };
     },
   },
@@ -377,8 +468,10 @@ Options:
   -h, --help          Show this help.
 
 What it does:
-   1. Checks for required tools (Node.js, uv, ruff). rtk is optional.
-   2. Auto-installs missing prerequisites (unless --no-auto-install).
+   1. Checks for required tools (Node.js, uv, ruff; Git on Windows). rtk is optional.
+   2. Auto-installs missing prerequisites (unless --no-auto-install). On Windows,
+      Git for Windows is installed via winget and its GNU tools (grep/head/tail)
+      are exposed on PATH so the config works inside pwsh.
    3. Auto-installs missing LSP servers invoked directly by the config
       (vtsls, bash/yaml, vscode-*, docker-langserver) — respecting
       pacman/AUR (yay|paru) on Arch, npm -g elsewhere.
@@ -435,6 +528,10 @@ async function main() {
       log(`Missing core prerequisites: ${core.map((p) => p.name).join(", ")}`);
       await autoInstall(core);
       refreshPath();
+      if (isWin) {
+        refreshWindowsPath();
+        configureWindowsGit();
+      }
 
       // Re-check after install
       const stillMissing = PREREQS_CORE.filter((p) => !which(p.name));

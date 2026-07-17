@@ -29,6 +29,12 @@
       "fd *": "allow",
       "eza *": "allow",
       "bat *": "allow",
+      // Safe read-only commands (PowerShell / Windows — used when pwsh is the shell)
+      "type *": "allow",
+      "dir *": "allow",
+      "Get-Content *": "allow",
+      "Get-ChildItem *": "allow",
+      "Select-String *": "allow",
       "node -e *": "allow",
       "npx -y *": "allow",
       "python -c *": "allow",
@@ -156,10 +162,6 @@
       "type": "remote",
       "url": "https://mcp.context7.com/mcp"
     },
-    "gh_grep": {
-      "type": "remote",
-      "url": "https://mcp.grep.app"
-    },
 
     // --- Local, no credentials (enabled) ---
     // Most servers run through npx for a portable, zero-install runner.
@@ -219,6 +221,6 @@
   ],
 
   "instructions": [
-    "~/.config/opencode/AGENTS.md"
+    "AGENTS.md"
   ]
 }

@@ -63,7 +63,7 @@ Detalhes, motivação e configuração extra de cada item estão em `docs/`:
 | Categoria | Arquivo | Resumo |
 |-----------|----------|---------|
 | **LSP** | [docs/lsp.md](docs/lsp.md) | 13 language servers: `basedpyright`, `ruff`, `vtsls`, `eslint-lsp`, `tailwindcss`, `emmet`, `bash`, `docker`, `yaml`, `json`, `html`, `css`, `markdown` |
-| **MCP** | [docs/mcp.md](docs/mcp.md) | `context7`, `gh_grep`, `fetch`, `sequentialthinking`, `git`, `sqlite` (ativos); `playwright`/`brave-search` (opcionais) |
+| **MCP** | [docs/mcp.md](docs/mcp.md) | `context7`, `fetch`, `sequentialthinking`, `git`, `sqlite` (ativos); `playwright`/`brave-search` (opcionais) |
 | **Plugins** | [docs/plugins.md](docs/plugins.md) | 8 plugins: `opencode-mem`, `@tarquinen/opencode-dcp`, `opencode-wakatime`, `opencode-pty`, `envsitter-guard`, `opencode-smart-title`, `openslimedit`, etc. |
 
 - **Skills** globais em `skills/`: `git-release`, `conventional-commits`,
@@ -75,6 +75,8 @@ Detalhes, motivação e configuração extra de cada item estão em `docs/`:
 
 O instalador **auto-instala** pré-requisitos faltantes. **Node.js**, **uv** e
 **ruff** são obrigatórios — o instalador instala automaticamente se ausentes.
+No Windows, o **Git for Windows** também é auto-instalado (via `winget`) e seu
+toolchain GNU é exposto no `PATH` para funcionar dentro do `pwsh`.
 **rtk** é opcional (recomendado) — também é instalado automaticamente.
 
 Use `--no-auto-install` para ver os comandos sem executar:
@@ -136,6 +138,19 @@ yay -S vtsls vscode-langservers-extracted docker-language-server
 
 ### Windows
 
+> **Shell sempre `pwsh`:** no Windows, o OpenCode usa `pwsh`/`cmd.exe` como
+> shell padrão. O instalador (`bin/install.mjs`) **auto-instala o Git for
+> Windows** (via `winget`, com download direto como fallback) e expõe o
+> toolchain GNU dele (`C:\Program Files\Git\usr\bin` — `grep`, `head`, `tail`,
+> `sed`, `awk`, `ls`, `cat`) no final do `PATH` do usuário. Assim os comandos
+> Unix usuais funcionam **dentro do pwsh**, reutilizando as permissões já
+> pré-configuradas e mantendo o `rtk` relevante — sem trocar o shell.
+>
+> Após a instalação, **reinicie o terminal** para que as variáveis de ambiente
+> atualizadas tenham efeito. O instalador também define `OPENCODE_GIT_BASH_PATH`
+> (contorno para o bug de detecção do `bash.exe` no OpenCode, issue #10871) caso
+> você prefira mudar para bash depois.
+
 ```powershell
 # Node.js LTS
 powershell -c "winget install OpenJS.NodeJS.LTS"
@@ -146,10 +161,19 @@ powershell -c "irm https://astral.sh/uv/install.ps1 | iex"
 # ruff
 powershell -c "irm https://astral.sh/ruff/install.ps1 | iex"
 
-# rtk (optional — Rust Token Killer)
-# Download from: https://github.com/rtk-ai/rtk/releases/latest
+# Git for Windows (instalado automaticamente pelo instalador; traz o toolchain GNU)
+winget install Git.Git --silent --accept-package-agreements --accept-source-agreements
+
+# rtk (Rust Token Killer) — instalado automaticamente pelo instalador;
+# o plugin local plugins/rtk.ts reescreve comandos bash para rtk.
+# Download manual: https://github.com/rtk-ai/rtk/releases/latest
 # Extract rtk-x86_64-pc-windows-msvc.zip to a directory in your PATH
 ```
+
+> **Comandos Unix no pwsh:** com o `usr\bin` do Git no PATH, `grep`, `head`,
+> `tail`, `sed`, `cat`, `ls` funcionam no pwsh. Caso o agente use cmdlets
+> nativos do PowerShell (`Get-ChildItem`, `Get-Content`, `Select-String`,
+> `type`, `dir`), já há permissões correspondentes no `opencode.jsonc`.
 
 ### macOS
 
@@ -196,5 +220,9 @@ Edite as regras de permissão no `opencode.jsonc` conforme seu fluxo de trabalho
   noutras distros, binário standalone da Astral).
 - **Memória sem credenciais:** `opencode-mem` é local (SQLite + embeddings
   locais); nada sai da máquina.
+- **rtk integrado automaticamente:** o `rtk` é instalado pelo instalador e o
+  plugin local `plugins/rtk.ts` (carregado pelo OpenCode em
+  `~/.config/opencode/plugins/`) reescreve comandos bash via `rtk rewrite`,
+  reduzindo tokens em 60-90%. Não precisa de `rtk init`.
 - MCPs e LSPs consomem contexto/tokens — mantenha ativos só os necessários
   por projeto.

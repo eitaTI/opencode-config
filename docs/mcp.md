@@ -11,7 +11,6 @@ apenas os necessários por projeto.
 | Nome | Tipo | Pacote / URL | Motivação | Config extra |
 |------|------|--------------|-----------|--------------|
 | `context7` | remoto | `https://mcp.context7.com/mcp` | Documentação de libs atualizada direto na IDE (sem alucinação de API) | nenhuma |
-| `gh_grep` | remoto | `https://mcp.grep.app` | Busca de código em repositórios via grep.app | nenhuma |
 | `fetch` | local | `uvx mcp-server-fetch` | Recupera conteúdo de URLs para o agente ler páginas/docs | nenhuma |
 | `sequentialthinking` | local | `npx -y @modelcontextprotocol/server-sequential-thinking` | Ferramenta de raciocínio passo-a-passo para problemas complexos | nenhuma |
 | `git` | local | `npx -y @cyanheads/git-mcp-server` | Operações Git versionadas via MCP (alternativa node ao `mcp-server-git` do Python) | nenhuma |

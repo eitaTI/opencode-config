@@ -15,11 +15,12 @@ entrada no array `"plugin"` do `opencode.jsonc`.
 | `envsitter-guard` | Proteção de variáveis de ambiente | Previne vazamento de secrets/keys em prompts | nenhuma |
 | `opencode-smart-title` | Títulos inteligentes de sessão | Gera nomes descritivos para sessões automaticamente | nenhuma |
 | `openslimedit` | Compressão de tool descriptions e compactação de leitura | Reduz tokens em até 45% comprimindo metadados de ferramentas | nenhuma (zero config) |
+| `rtk` (plugin local `plugins/rtk.ts`) | Reescrita automática de comandos bash para `rtk` | Filtra saída de comandos shell antes de chegar ao LLM (60-90% de economia de tokens). Usa o hook `tool.execute.before` + `rtk rewrite` — cross-platform | Requer binário `rtk` no PATH (instalado pelo instalador). Desabilita-se sozinho se `rtk` não for encontrado |
 
 ## Notas
 
 - **Token optimization stack:** Otimização em três camadas complementares:
-  1. **rtk** — filtra saída de comandos shell (60-90% de economia)
+  1. **rtk** — filtra saída de comandos shell via plugin local `plugins/rtk.ts` (60-90% de economia)
   2. **openslimedit** — comprime tool descriptions (até 45% de economia)
   3. **opencode-dcp** — poda contexto de conversa (50-70% de economia)
 - **Memória:** `opencode-mem` é local-first; nada sai da máquina. Sem
