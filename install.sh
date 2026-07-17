@@ -136,6 +136,44 @@ else
 	echo "==> rtk already present: $(rtk --version)"
 fi
 
+# --- LSPs invoked *directly* by opencode.jsonc ---
+# (vtsls, bash-language-server, yaml-language-server,
+#  vscode-{json,html,css,markdown}-language-server, docker-langserver)
+# LSPs run via `npx -y` (basedpyright, tailwindcss, emmet, eslint) need no install.
+# On Arch/CachyOS prefer pacman/AUR (yay|paru) over `npm i -g`,
+# which writes outside pacman's control and can break system updates.
+AUR_HELPER=""
+if command -v yay >/dev/null 2>&1; then AUR_HELPER="yay";
+elif command -v paru >/dev/null 2>&1; then AUR_HELPER="paru"; fi
+
+# install_lsp <binary> <pacman-pkg> <aur-pkg> <npm-pkg>
+install_lsp() {
+  local bin="$1" pac="$2" aur="$3" npm="$4"
+  if command -v "$bin" >/dev/null 2>&1; then
+    echo "==> $bin already present"
+    return
+  fi
+  echo "==> Installing $bin..."
+  if [ "$DISTRO" = "arch" ]; then
+    if [ -n "$pac" ]; then
+      sudo pacman -S --noconfirm "$pac"
+    elif [ -n "$AUR_HELPER" ] && [ -n "$aur" ]; then
+      "$AUR_HELPER" -S --noconfirm "$aur"
+    else
+      npm i -g "$npm"
+    fi
+  else
+    npm i -g "$npm"
+  fi
+}
+
+#            binary                     pacman                    AUR                          npm
+install_lsp vtsls                      ""                        vtsls                        @vtsls/language-server
+install_lsp bash-language-server       bash-language-server      ""                           bash-language-server
+install_lsp yaml-language-server       yaml-language-server      ""                           yaml-language-server
+install_lsp vscode-markdown-language-server ""                   vscode-langservers-extracted vscode-langservers-extracted
+install_lsp docker-langserver         ""                        docker-language-server         dockerfile-language-server-nodejs
+
 mkdir -p "$DEST"
 
 ln -sfn "$SRC/opencode.jsonc" "$DEST/opencode.jsonc"

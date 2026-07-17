@@ -2,35 +2,44 @@
 
 O OpenCode auto-instala LSPs built-in conforme os arquivos abertos
 (`typescript`, `eslint`, `oxlint`). Os servidores abaixo são configurados
-manualmente. Todos os servidores locais rodam via **`npx -y`** (Node.js) —
-runner único e portátil. Nenhuma configuração extra é exigida, salvo a
-instalação do binário `ruff` (ver abaixo).
+manualmente.
 
 Regra geral: LSPs consomem memória em projetos grandes; desative por
 servidor se precisar (ex.: `"pyright": { "disabled": true }`).
 
-## Instalação por distro
+## Instalação por sistema operacional
 
-No **Arch Linux / CachyOS**, prefira sempre `pacman` ou AUR para instalar
-LSPs — integrado ao sistema de atualizações e sem binários soltos.
+O instalador (`bin/install.mjs` / `install.sh`) **auto-instala** os LSPs
+invocados *diretamente* no `opencode.jsonc` (abaixo). Os que rodam via
+`npx -y` — **basedpyright**, **eslint-lsp**, **tailwindcss** e
+**emmet** (`@olrtg/emmet-language-server`) — **não** precisam de instalação:
+o `npx` baixa sob demanda.
 
-| LSP | pacman (extra) | AUR | npm global |
-|-----|:-:|:-:|:-:|
-| `ruff` | `sudo pacman -S ruff` | — | — |
-| `bash-language-server` | `sudo pacman -S bash-language-server` | — | — |
-| `yaml-language-server` | `sudo pacman -S yaml-language-server` | — | — |
-| `vscode-json-language-server` | `sudo pacman -S vscode-json-languageserver` | — | — |
-| `vscode-html-language-server` | `sudo pacman -S vscode-html-languageserver` | — | — |
-| `vscode-css-language-server` | `sudo pacman -S vscode-css-languageserver` | — | — |
-| `vtsls` | — | `yay -S vtsls` | `npm i -g @vtsls/language-server` |
-| `docker-langserver` | — | `yay -S dockerfile-language-server` | `npm i -g dockerfile-language-server-nodejs` |
-| `emmet-language-server` | — | `yay -S emmet-language-server` | `npm i -g @olrtg/emmet-language-server` |
+> **Arch / CachyOS:** use **sempre** `pacman` / `yay` / `paru`.
+> **Nunca** `sudo npm install -g` — escreve fora do controle do pacman e
+> quebra atualizações do sistema.
 
-> **Evite `sudo npm install -g`** no Arch — escreve fora do controle do pacman
-> e pode causar conflitos em atualizações. Use pacman/AUR sempre que possível.
+### Arch Linux / CachyOS
+```bash
+# Pacman (repositório [extra])
+sudo pacman -S bash-language-server yaml-language-server
 
-LSPs executados via **`npx -y`** (basedpyright, eslint-lsp, tailwindcss) não
-precisam de instalação manual — o `npx` baixa sob demanda.
+# AUR (precisa de yay ou paru) — cobre json/html/css/markdown de uma vez
+yay -S vtsls vscode-langservers-extracted docker-language-server
+```
+
+### Ubuntu / Debian (e demais distros não-Arch)
+```bash
+npm i -g vtsls bash-language-server yaml-language-server \
+  vscode-langservers-extracted dockerfile-language-server-nodejs
+# vscode-langservers-extracted cobre json/html/css/markdown de uma vez
+```
+
+### Windows
+```powershell
+npm i -g vtsls bash-language-server yaml-language-server `
+  vscode-langservers-extracted dockerfile-language-server-nodejs
+```
 
 ## Built-ins (automáticos)
 
@@ -133,7 +142,7 @@ precisam de instalação manual — o `npx` baixa sob demanda.
 - **Escopo:** `Dockerfile`, `.dockerfile`.
 - **Motivação:** Language Server para Dockerfiles.
 - **Instalação:**
-  - **Arch/CachyOS:** `yay -S dockerfile-language-server` (AUR).
+  - **Arch/CachyOS:** `yay -S docker-language-server` (AUR — fornece o binário `docker-langserver`).
   - **Outras distros:** `npm i -g dockerfile-language-server-nodejs`.
 
 ### `yaml-language-server`
@@ -158,10 +167,10 @@ precisam de instalação manual — o `npx` baixa sob demanda.
 - **Comando:** `vscode-markdown-language-server --stdio`
 - **Escopo:** `.md`, `.markdown`.
 - **Motivação:** Language Server para Markdown (links, headings).
-- **Instalação:**
+- **Instalação:** vem do pacote `vscode-langservers-extracted` (junto com
+  json/html/css).
+  - **Arch/CachyOS:** `yay -S vscode-langservers-extracted` (AUR).
   - **Outras distros:** `npm i -g vscode-langservers-extracted`.
-  - **Arch/CachyOS:** não há pacote oficial no pacman/AUR — use `npx -y`
-    (já configurado no opencode.jsonc).
 
 ## Formatação
 

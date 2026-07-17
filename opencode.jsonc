@@ -95,7 +95,7 @@
     },
     // Emmet abbreviations in HTML/CSS.
     "emmet": {
-      "command": ["npx", "-y", "emmet-language-server", "--stdio"],
+      "command": ["npx", "-y", "@olrtg/emmet-language-server", "--stdio"],
       "extensions": [".html", ".css", ".scss"]
     },
     // ESLint LSP (official, extracted from the VS Code ESLint extension).

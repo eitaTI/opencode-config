@@ -117,20 +117,22 @@ O instalador usa **FNM** (Fast Node Manager) para instalar **Node.js** no Arch
 (evita conflitos com pacotes do sistema e permite troca de versão por projeto).
 **ruff** é instalado via `pacman -S ruff` (repositório oficial [extra]).
 
-Para os **LSPs** listados no config, instale via pacman/AUR:
+Para os **LSPs** invocados diretamente no config, o instalador já
+auto-instala (preferindo `pacman`/`yay`/`paru` no Arch). Para instalar
+manualmente no Arch/CachyOS:
 
 ```bash
 # LSPs nos repositórios oficiais (extra)
-sudo pacman -S bash-language-server yaml-language-server \
-  vscode-json-languageserver vscode-html-languageserver \
-  vscode-css-languageserver
+sudo pacman -S bash-language-server yaml-language-server
 
-# LSPs na AUR (use yay ou paru)
-yay -S vtsls dockerfile-language-server emmet-language-server
+# LSPs na AUR (use yay ou paru) — vscode-langservers-extracted cobre
+# json/html/css/markdown de uma vez
+yay -S vtsls vscode-langservers-extracted docker-language-server
 ```
 
-> **Nota:** `vscode-markdown-language-server` não tem pacote oficial no Arch.
-> Para Markdown, o LSP funciona via `npx -y` (já configurado no opencode.jsonc).
+> **Nota:** `emmet-language-server` roda via `npx -y @olrtg/emmet-language-server`
+> (já configurado no opencode.jsonc) — não precisa de instalação. Veja
+> `docs/lsp.md` para Ubuntu/Windows.
 
 ### Windows
 

@@ -238,6 +238,69 @@ const PREREQS_OPTIONAL = [
   },
 ];
 
+// LSPs invoked *directly* by opencode.jsonc (need a real binary on PATH).
+// LSPs run via `npx -y` (basedpyright, tailwindcss, emmet, eslint-lsp)
+// are downloaded on demand and are intentionally excluded here.
+// On Arch/CachyOS we prefer pacman/AUR (yay|paru) over `npm i -g`,
+// which writes outside pacman's control and can break system updates.
+function getAurHelper() {
+  if (which("yay")) return "yay";
+  if (which("paru")) return "paru";
+  return null;
+}
+
+const LSP_SERVERS = [
+  {
+    name: "vtsls",
+    note: "TypeScript/JavaScript LSP (vtsls --stdio)",
+    getInstallCmd() {
+      const aur = getAurHelper();
+      if (isArchBased()) return aur ? { cmd: aur, args: ["-S", "--noconfirm", "vtsls"] } : { cmd: "npm", args: ["i", "-g", "@vtsls/language-server"] };
+      return { cmd: "npm", args: ["i", "-g", "@vtsls/language-server"] };
+    },
+  },
+  {
+    name: "bash-language-server",
+    note: "Bash/Shell LSP (bash-language-server start)",
+    getInstallCmd() {
+      if (isArchBased()) return { cmd: "sudo", args: ["pacman", "-S", "--noconfirm", "bash-language-server"] };
+      return { cmd: "npm", args: ["i", "-g", "bash-language-server"] };
+    },
+  },
+  {
+    name: "yaml-language-server",
+    note: "YAML LSP (yaml-language-server --stdio)",
+    getInstallCmd() {
+      if (isArchBased()) return { cmd: "sudo", args: ["pacman", "-S", "--noconfirm", "yaml-language-server"] };
+      return { cmd: "npm", args: ["i", "-g", "yaml-language-server"] };
+    },
+  },
+  {
+    // Binary check covers all four VS Code extracted servers
+    // (json/html/css/markdown) provided by this one package.
+    name: "vscode-markdown-language-server",
+    note: "VS Code LSPs: json/html/css/markdown (vscode-*-language-server)",
+    getInstallCmd() {
+      const aur = getAurHelper();
+      if (isArchBased()) return aur ? { cmd: aur, args: ["-S", "--noconfirm", "vscode-langservers-extracted"] } : { cmd: "npm", args: ["i", "-g", "vscode-langservers-extracted"] };
+      return { cmd: "npm", args: ["i", "-g", "vscode-langservers-extracted"] };
+    },
+  },
+  {
+    name: "docker-langserver",
+    note: "Dockerfile LSP (docker-langserver --stdio)",
+    getInstallCmd() {
+      const aur = getAurHelper();
+      if (isArchBased()) return aur ? { cmd: aur, args: ["-S", "--noconfirm", "docker-language-server"] } : { cmd: "npm", args: ["i", "-g", "dockerfile-language-server-nodejs"] };
+      return { cmd: "npm", args: ["i", "-g", "dockerfile-language-server-nodejs"] };
+    },
+  },
+];
+
+function checkLSPs() {
+  return LSP_SERVERS.filter((p) => !which(p.name));
+}
+
 function checkPrerequisites() {
   const core = PREREQS_CORE.filter((p) => !which(p.name));
   const optional = PREREQS_OPTIONAL.filter((p) => !which(p.name));
@@ -297,8 +360,11 @@ Options:
   -h, --help          Show this help.
 
 What it does:
-  1. Checks for required tools (Node.js, uv, ruff). rtk is optional.
-  2. Auto-installs missing prerequisites (unless --no-auto-install).
+   1. Checks for required tools (Node.js, uv, ruff). rtk is optional.
+   2. Auto-installs missing prerequisites (unless --no-auto-install).
+   3. Auto-installs missing LSP servers invoked directly by the config
+      (vtsls, bash/yaml, vscode-*, docker-langserver) — respecting
+      pacman/AUR (yay|paru) on Arch, npm -g elsewhere.
   3. If target dir has existing config, prompts for confirmation (or --force).
   4. Creates a timestamped backup before overwriting.
   5. Copies config files to ~/.config/opencode.
@@ -370,6 +436,26 @@ async function main() {
     } else {
       log(`Installing optional tools: ${optional.map((p) => p.name).join(", ")}`);
       await autoInstall(optional);
+    }
+  }
+
+  // LSPs invoked directly by opencode.jsonc — auto-install if missing.
+  const lsps = checkLSPs();
+  if (lsps.length) {
+    if (dry) {
+      warn("dry-run: missing LSP servers (would be installed):");
+      for (const p of lsps) warn(`  ${p.name} not found`);
+    } else if (noAutoInstall) {
+      printPrerequisiteHelp(lsps, "LSP servers");
+      console.log("\nInstall the LSP servers above, then re-run the command.\n");
+    } else {
+      log(`Installing LSP servers: ${lsps.map((p) => p.name).join(", ")}`);
+      await autoInstall(lsps);
+      const stillMissing = LSP_SERVERS.filter((p) => !which(p.name));
+      if (stillMissing.length) {
+        printPrerequisiteHelp(stillMissing, "LSP servers still missing");
+        console.error("\nAuto-install failed for the LSP servers above. Install manually, then re-run.");
+      }
     }
   }
 
