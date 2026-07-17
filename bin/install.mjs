@@ -302,11 +302,11 @@ function getAurHelper() {
   return null;
 }
 
-// Build AUR helper install args with the correct "skip edit" flag.
-// `paru` accepts `--noedit`; `yay` requires `--noansweredit`.
+// Build AUR helper install args with the correct "skip review" flag.
+// `paru` accepts `--skipreview`; `yay` requires `--noansweredit`.
 function aurInstallArgs(pkg) {
   const h = getAurHelper();
-  const editFlag = h === "yay" ? "--noansweredit" : "--noedit";
+  const editFlag = h === "yay" ? "--noansweredit" : "--skipreview";
   return ["-S", "--noconfirm", editFlag, pkg];
 }
 
