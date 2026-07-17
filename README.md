@@ -45,7 +45,7 @@ bash install.sh    # Unix apenas
 
 O `install.sh` (idempotente) faz:
 1. Detecta a distro (Arch/Debian/Fedora/SUSE) e instala **Node.js** e **ruff** se ausentes.
-   - No Arch, usa **FNM** para Node.js (evita conflitos com `/usr`) e `pacman -S ruff`.
+      - No Arch, usa **FNM** para Node.js (evita conflitos com `/usr`) e `pacman -S python-ruff`.
 2. Instala **uv** e **rtk** se ausentes.
 3. Cria symlinks de `opencode.jsonc`, `skills/`, `commands/`, `docs/` e `AGENTS.md` em `~/.config/opencode`.
 
@@ -117,7 +117,7 @@ npx -y github:EitaTI/opencode-config
 
 O instalador usa **FNM** (Fast Node Manager) para instalar **Node.js** no Arch
 (evita conflitos com pacotes do sistema e permite troca de versão por projeto).
-**ruff** é instalado via `pacman -S ruff` (repositório oficial [extra]).
+**ruff** é instalado via `pacman -S python-ruff` (repositório oficial [extra]); se o pacman falhar (ex.: mirror quebrado), o instalador tenta o helper AUR (yay|paru).
 
 Para os **LSPs** invocados diretamente no config, o instalador já
 auto-instala (preferindo `pacman`/`yay`/`paru` no Arch). Para instalar

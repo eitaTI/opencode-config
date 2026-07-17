@@ -245,8 +245,15 @@ const PREREQS_CORE = [
     note: "Python LSP + formatter used by the config",
     getInstallCmd() {
       if (isWin) return { cmd: "powershell", args: ["-c", "irm https://astral.sh/ruff/install.ps1 | iex"] };
-      if (isArchBased()) return { cmd: "sudo", args: ["pacman", "-S", "--noconfirm", "ruff"] };
+      if (isArchBased()) return { cmd: "sudo", args: ["pacman", "-S", "--noconfirm", "python-ruff"] };
       return { cmd: "bash", args: ["-c", "curl -LsSf https://astral.sh/ruff/install.sh | sh"] };
+    },
+    // On Arch, if pacman fails (e.g. broken mirror), retry via the AUR helper
+    // (yay|paru). Installs stay exclusive to pacman/AUR — never standalone/npm.
+    getFallbackInstallCmds() {
+      if (!isArchBased()) return [];
+      const h = getAurHelper();
+      return h ? [{ cmd: h, args: ["-S", "--noconfirm", "--noedit", "python-ruff"] }] : [];
     },
   },
 ];
@@ -363,7 +370,7 @@ const LSP_SERVERS = [
     note: "TypeScript/JavaScript LSP (vtsls --stdio)",
     getInstallCmd() {
       const aur = getAurHelper();
-      if (isArchBased()) return aur ? { cmd: aur, args: ["-S", "--noconfirm", "--noedit", "vtsls"] } : { cmd: "npm", args: ["i", "-g", "@vtsls/language-server"] };
+      if (isArchBased()) return aur ? { cmd: aur, args: ["-S", "--noconfirm", "--noedit", "vtsls"] } : null;
       return { cmd: "npm", args: ["i", "-g", "@vtsls/language-server"] };
     },
   },
@@ -374,6 +381,11 @@ const LSP_SERVERS = [
       if (isArchBased()) return { cmd: "sudo", args: ["pacman", "-S", "--noconfirm", "bash-language-server"] };
       return { cmd: "npm", args: ["i", "-g", "bash-language-server"] };
     },
+    getFallbackInstallCmds() {
+      if (!isArchBased()) return [];
+      const h = getAurHelper();
+      return h ? [{ cmd: h, args: ["-S", "--noconfirm", "--noedit", "bash-language-server"] }] : [];
+    },
   },
   {
     name: "yaml-language-server",
@@ -381,6 +393,11 @@ const LSP_SERVERS = [
     getInstallCmd() {
       if (isArchBased()) return { cmd: "sudo", args: ["pacman", "-S", "--noconfirm", "yaml-language-server"] };
       return { cmd: "npm", args: ["i", "-g", "yaml-language-server"] };
+    },
+    getFallbackInstallCmds() {
+      if (!isArchBased()) return [];
+      const h = getAurHelper();
+      return h ? [{ cmd: h, args: ["-S", "--noconfirm", "--noedit", "yaml-language-server"] }] : [];
     },
   },
   {
@@ -390,7 +407,7 @@ const LSP_SERVERS = [
     note: "VS Code LSPs: json/html/css/markdown (vscode-*-language-server)",
     getInstallCmd() {
       const aur = getAurHelper();
-      if (isArchBased()) return aur ? { cmd: aur, args: ["-S", "--noconfirm", "--noedit", "vscode-langservers-extracted"] } : { cmd: "npm", args: ["i", "-g", "vscode-langservers-extracted"] };
+      if (isArchBased()) return aur ? { cmd: aur, args: ["-S", "--noconfirm", "--noedit", "vscode-langservers-extracted"] } : null;
       return { cmd: "npm", args: ["i", "-g", "vscode-langservers-extracted"] };
     },
   },
@@ -399,7 +416,7 @@ const LSP_SERVERS = [
     note: "Dockerfile LSP (docker-langserver --stdio)",
     getInstallCmd() {
       const aur = getAurHelper();
-      if (isArchBased()) return aur ? { cmd: aur, args: ["-S", "--noconfirm", "--noedit", "docker-language-server"] } : { cmd: "npm", args: ["i", "-g", "dockerfile-language-server-nodejs"] };
+      if (isArchBased()) return aur ? { cmd: aur, args: ["-S", "--noconfirm", "--noedit", "docker-language-server"] } : null;
       return { cmd: "npm", args: ["i", "-g", "dockerfile-language-server-nodejs"] };
     },
   },
@@ -430,23 +447,27 @@ ${label} tool(s) missing (${osLabel}):
 
 async function autoInstall(missing) {
   for (const p of missing) {
-    const installCmd = p.getInstallCmd();
-    if (!installCmd) {
+    const attempts = [p.getInstallCmd(), ...(p.getFallbackInstallCmds ? p.getFallbackInstallCmds() : [])].filter(Boolean);
+    if (attempts.length === 0) {
       warn(`No auto-install command available for ${p.name} — install manually`);
       continue;
     }
 
-    log(`Installing ${p.name}...`);
-    try {
-      const success = runCommand(installCmd.cmd, installCmd.args);
-      if (success) {
-        log(`${p.name} installed successfully`);
-      } else {
-        warn(`Failed to install ${p.name} — install manually`);
+    let installed = false;
+    for (const installCmd of attempts) {
+      log(`Installing ${p.name} (${installCmd.cmd} ${installCmd.args.join(" ")})...`);
+      try {
+        if (runCommand(installCmd.cmd, installCmd.args)) {
+          log(`${p.name} installed successfully`);
+          installed = true;
+          break;
+        }
+        warn(`Install via ${installCmd.cmd} failed — trying next option...`);
+      } catch (err) {
+        warn(`Error installing ${p.name}: ${err.message}`);
       }
-    } catch (err) {
-      warn(`Error installing ${p.name}: ${err.message}`);
     }
+    if (!installed) warn(`Failed to install ${p.name} — install manually`);
   }
 }
 

@@ -94,18 +94,26 @@ else
 fi
 
 # --- ruff (Python LSP + formatter) ---
-# Python linter + formatter written in Rust. On Arch Linux, ruff is available
-# in the official [extra] repository (pacman -S ruff) — preferred over the
-# standalone installer since it integrates with system updates and dependency
-# management. On other distros, the standalone binary from Astral is used.
+# Python linter + formatter written in Rust. On Arch/CachyOS the package is
+# named `python-ruff` (it provides the `ruff` binary). Installed via pacman,
+# with a fallback to the AUR helper (yay|paru) if pacman fails (e.g. a broken
+# mirror). Installs stay exclusive to pacman/AUR — never the standalone
+# installer or npm. On non-Arch distros, the standalone binary from Astral is
+# used.
 if ! command -v ruff >/dev/null 2>&1; then
 	echo "==> Installing ruff..."
 	case "$DISTRO" in
 	arch)
-		if pacman -Qi ruff >/dev/null 2>&1; then
-			echo "    ruff already installed via pacman"
+		if pacman -Qi python-ruff >/dev/null 2>&1; then
+			echo "    ruff already installed via pacman (python-ruff)"
+		elif sudo pacman -S --noconfirm python-ruff; then
+			echo "    ruff installed via pacman (python-ruff)"
+		elif [ -n "$AUR_HELPER" ]; then
+			echo "    pacman failed, trying AUR helper ($AUR_HELPER)..."
+			"$AUR_HELPER" -S --noconfirm --noedit python-ruff
 		else
-			sudo pacman -S --noconfirm ruff
+			echo "    (warn) Could not install ruff via pacman or AUR — install manually:" >&2
+			echo "    sudo pacman -S python-ruff   (or install an AUR helper: yay/paru)" >&2
 		fi
 		;;
 	*)
@@ -147,6 +155,8 @@ if command -v yay >/dev/null 2>&1; then AUR_HELPER="yay";
 elif command -v paru >/dev/null 2>&1; then AUR_HELPER="paru"; fi
 
 # install_lsp <binary> <pacman-pkg> <aur-pkg> <npm-pkg>
+# On Arch/CachyOS, installs stay exclusive to pacman/AUR (yay|paru) — never npm.
+# On other distros, the npm package is used.
 install_lsp() {
   local bin="$1" pac="$2" aur="$3" npm="$4"
   if command -v "$bin" >/dev/null 2>&1; then
@@ -160,7 +170,12 @@ install_lsp() {
     elif [ -n "$AUR_HELPER" ] && [ -n "$aur" ]; then
       "$AUR_HELPER" -S --noconfirm --noedit "$aur"
     else
-      npm i -g "$npm"
+      echo "    (warn) $bin has no pacman package and no AUR helper (yay/paru) on this system." >&2
+      if [ -n "$aur" ]; then
+        echo "    Install an AUR helper then run: $AUR_HELPER -S --noedit $aur" >&2
+      else
+        echo "    No Arch package available for $bin — install manually." >&2
+      fi
     fi
   else
     npm i -g "$npm"

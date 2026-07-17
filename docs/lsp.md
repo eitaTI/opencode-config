@@ -69,7 +69,7 @@ npm i -g vtsls bash-language-server yaml-language-server `
 - **Motivação:** lint + formatação rápida de Python, complementando o
   type-check. O formatter do OpenCode também usa o ruff para Python.
 - **Instalação:**
-  - **Arch/CachyOS:** `sudo pacman -S ruff` (repositório oficial [extra]).
+  - **Arch/CachyOS:** `sudo pacman -S python-ruff` (repositório oficial [extra]); se o pacman falhar, o helper AUR (yay|paru) é usado.
   - **Outras distros:** `curl -LsSf https://astral.sh/ruff/install.sh | sh`
     (binário standalone — a Astral não publica o ruff no npm).
 
