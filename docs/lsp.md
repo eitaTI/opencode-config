@@ -103,13 +103,13 @@ npm i -g vtsls bash-language-server yaml-language-server `
 - **Config extra:** nenhuma.
 
 ### `emmet-language-server`
-- **Comando:** `npx -y emmet-language-server --stdio`
+- **Comando:** `npx -y @olrtg/emmet-language-server --stdio`
 - **Escopo:** `.html`, `.css`, `.scss`.
 - **Motivação:** abreviações Emmet em HTML/CSS (expansão rápida de
   markup). Só ativa nesses tipos de arquivo.
-- **Instalação:** roda via `npx` (sem instalação manual). Alternativa:
-  - **Arch/CachyOS:** `yay -S emmet-language-server` (AUR).
-  - **Outras distros:** `npm i -g @olrtg/emmet-language-server`.
+- **Instalação:** roda via `npx -y @olrtg/emmet-language-server` (pacote
+  mantido) — **sem instalação manual**. Alternativa global:
+  `npm i -g @olrtg/emmet-language-server`.
 
 ### `vscode-html-language-server`
 - **Comando:** `vscode-html-language-server --stdio`

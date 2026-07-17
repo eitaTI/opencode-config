@@ -249,6 +249,23 @@ function getAurHelper() {
   return null;
 }
 
+// Re-expose node/npm on PATH when they were just installed via FNM/nvm
+// in this same run (the current process env isn't auto-updated). Needed
+// before the `npm i -g` LSP step on a system that lacked Node.
+function refreshPath() {
+  if (which("npm")) return;
+  if (isWin) return;
+  for (const helper of ["fnm", "nvm"]) {
+    if (!which(helper)) continue;
+    try {
+      const out = spawnSync("bash", ["-lc", `eval "$( ${helper} env )" 2>/dev/null; echo "PATH=$PATH"`], { stdio: "pipe" });
+      const m = /PATH=(.*)/.exec(out.stdout.toString());
+      if (m) process.env.PATH = m[1] + (process.env.PATH ? ":" + process.env.PATH : "");
+    } catch {}
+    if (which("npm")) return;
+  }
+}
+
 const LSP_SERVERS = [
   {
     name: "vtsls",
@@ -417,6 +434,7 @@ async function main() {
     } else {
       log(`Missing core prerequisites: ${core.map((p) => p.name).join(", ")}`);
       await autoInstall(core);
+      refreshPath();
 
       // Re-check after install
       const stillMissing = PREREQS_CORE.filter((p) => !which(p.name));

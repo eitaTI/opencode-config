@@ -174,6 +174,15 @@ install_lsp yaml-language-server       yaml-language-server      ""             
 install_lsp vscode-markdown-language-server ""                   vscode-langservers-extracted vscode-langservers-extracted
 install_lsp docker-langserver         ""                        docker-language-server         dockerfile-language-server-nodejs
 
+# Se o Node foi instalado via FNM/nvm nesta mesma execução, o `npm`
+# pode não estar no PATH do shell atual — disponibiliza antes do `npm i -g`.
+if ! command -v npm >/dev/null 2>&1; then
+	export PATH="$HOME/.local/share/fnm:$PATH" 2>/dev/null
+	# shellcheck disable=SC2091
+	eval "$(fnm env 2>/dev/null)" 2>/dev/null
+	export PATH="$HOME/.nvm/versions/node/*/bin:$PATH" 2>/dev/null
+fi
+
 mkdir -p "$DEST"
 
 ln -sfn "$SRC/opencode.jsonc" "$DEST/opencode.jsonc"
