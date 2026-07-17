@@ -98,12 +98,12 @@ fi
 
 # --- AUR helper (yay|paru) detection ---
 # Used as a fallback when pacman fails (e.g. a broken mirror). `paru` accepts
-# `--noedit`; `yay` requires `--noeditmenu`.
+# `--noedit`; `yay` requires `--noansweredit`.
 AUR_HELPER=""
-if command -v yay >/dev/null 2>&1; then AUR_HELPER="yay";
-elif command -v paru >/dev/null 2>&1; then AUR_HELPER="paru"; fi
+if command -v paru >/dev/null 2>&1; then AUR_HELPER="paru";
+elif command -v yay >/dev/null 2>&1; then AUR_HELPER="yay"; fi
 AUR_EDIT_FLAG="--noedit"
-[ "$AUR_HELPER" = "yay" ] && AUR_EDIT_FLAG="--noeditmenu"
+[ "$AUR_HELPER" = "yay" ] && AUR_EDIT_FLAG="--noansweredit"
 
 # --- ruff (Python LSP + formatter) ---
 # Python linter + formatter written in Rust. On Arch/CachyOS the package is

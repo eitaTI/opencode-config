@@ -297,16 +297,16 @@ const PREREQS_OPTIONAL = [
 // On Arch/CachyOS we prefer pacman/AUR (yay|paru) over `npm i -g`,
 // which writes outside pacman's control and can break system updates.
 function getAurHelper() {
-  if (which("yay")) return "yay";
   if (which("paru")) return "paru";
+  if (which("yay")) return "yay";
   return null;
 }
 
 // Build AUR helper install args with the correct "skip edit" flag.
-// `paru` accepts `--noedit`; `yay` requires `--noeditmenu`.
+// `paru` accepts `--noedit`; `yay` requires `--noansweredit`.
 function aurInstallArgs(pkg) {
   const h = getAurHelper();
-  const editFlag = h === "yay" ? "--noeditmenu" : "--noedit";
+  const editFlag = h === "yay" ? "--noansweredit" : "--noedit";
   return ["-S", "--noconfirm", editFlag, pkg];
 }
 
