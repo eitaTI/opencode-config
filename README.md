@@ -21,7 +21,7 @@ npx -y github:EitaTI/opencode-config
 > $env:Path = [System.Environment]::GetEnvironmentVariable("Path","Machine") + ";" + [System.Environment]::GetEnvironmentVariable("Path","User")
 > ```
 
-Esse comando (1) **auto-instala** pré-requisitos faltantes (Node.js, uv, ruff, rtk),
+Esse comando (1) **auto-instala** pré-requisitos faltantes (Node.js, uv, ruff),
 (2) copia `opencode.jsonc`, `skills/`, `commands/`, `docs/` e `AGENTS.md` para o
 diretório global do OpenCode (`~/.config/opencode`), (3) se já existir config, cria backup
 antes de sobrescrever. Opções:
@@ -46,7 +46,7 @@ bash install.sh    # Unix apenas
 O `install.sh` (idempotente) faz:
 1. Detecta a distro (Arch/Debian/Fedora/SUSE) e instala **Node.js** e **ruff** se ausentes.
       - No Arch, usa **FNM** para Node.js (evita conflitos com `/usr`) e `pacman -S python-ruff`.
-2. Instala **uv** e **rtk** se ausentes.
+2. Instala **uv** se ausente.
 3. Cria symlinks de `opencode.jsonc`, `skills/`, `commands/`, `docs/` e `AGENTS.md` em `~/.config/opencode`.
 
 No Windows, use o instalador cross-platform:
@@ -64,7 +64,7 @@ Detalhes, motivação e configuração extra de cada item estão em `docs/`:
 |-----------|----------|---------|
 | **LSP** | [docs/lsp.md](docs/lsp.md) | 13 language servers: `basedpyright`, `ruff`, `vtsls`, `eslint-lsp`, `tailwindcss`, `emmet`, `bash`, `docker`, `yaml`, `json`, `html`, `css`, `markdown` |
 | **MCP** | [docs/mcp.md](docs/mcp.md) | `context7`, `fetch`, `sequentialthinking`, `git`, `sqlite` (ativos); `playwright`/`brave-search` (opcionais) |
-| **Plugins** | [docs/plugins.md](docs/plugins.md) | 8 plugins: `opencode-mem`, `@tarquinen/opencode-dcp`, `opencode-wakatime`, `opencode-pty`, `envsitter-guard`, `opencode-smart-title`, `openslimedit`, etc. |
+| **Plugins** | [docs/plugins.md](docs/plugins.md) | 7 plugins: `opencode-mem`, `@tarquinen/opencode-dcp`, `opencode-wakatime`, `opencode-pty`, `envsitter-guard`, `opencode-smart-title`, `openslimedit`, etc. |
 
 - **Skills** globais em `skills/`: `git-release`, `conventional-commits`,
   `explain-code`, `codemap`, `clonedeps`, `worktrees`, `simplify`.
@@ -77,7 +77,6 @@ O instalador **auto-instala** pré-requisitos faltantes. **Node.js**, **uv** e
 **ruff** são obrigatórios — o instalador instala automaticamente se ausentes.
 No Windows, o **Git for Windows** também é auto-instalado (via `winget`) e seu
 toolchain GNU é exposto no `PATH` para funcionar dentro do `pwsh`.
-**rtk** é opcional (recomendado) — também é instalado automaticamente.
 
 Use `--no-auto-install` para ver os comandos sem executar:
 
@@ -93,9 +92,6 @@ curl -LsSf https://astral.sh/uv/install.sh | sh
 
 # ruff (Python LSP + formatter)
 curl -LsSf https://astral.sh/ruff/install.sh | sh
-
-# rtk (Rust Token Killer — optional, reduces LLM token consumption by 60-90%)
-curl -fsSL https://raw.githubusercontent.com/rtk-ai/rtk/refs/heads/master/install.sh | sh
 ```
 
 ### CachyOS / Arch Linux / EndeavourOS
@@ -144,7 +140,7 @@ yay -S vtsls vscode-langservers-extracted docker-language-server
 > toolchain GNU dele (`C:\Program Files\Git\usr\bin` — `grep`, `head`, `tail`,
 > `sed`, `awk`, `ls`, `cat`) no final do `PATH` do usuário. Assim os comandos
 > Unix usuais funcionam **dentro do pwsh**, reutilizando as permissões já
-> pré-configuradas e mantendo o `rtk` relevante — sem trocar o shell.
+> pré-configuradas — sem trocar o shell.
 >
 > Após a instalação, **reinicie o terminal** para que as variáveis de ambiente
 > atualizadas tenham efeito. O instalador também define `OPENCODE_GIT_BASH_PATH`
@@ -163,11 +159,6 @@ powershell -c "irm https://astral.sh/ruff/install.ps1 | iex"
 
 # Git for Windows (instalado automaticamente pelo instalador; traz o toolchain GNU)
 winget install Git.Git --silent --accept-package-agreements --accept-source-agreements
-
-# rtk (Rust Token Killer) — instalado automaticamente pelo instalador;
-# o plugin local plugins/rtk.ts reescreve comandos bash para rtk.
-# Download manual: https://github.com/rtk-ai/rtk/releases/latest
-# Extract rtk-x86_64-pc-windows-msvc.zip to a directory in your PATH
 ```
 
 > **Comandos Unix no pwsh:** com o `usr\bin` do Git no PATH, `grep`, `head`,
@@ -186,9 +177,6 @@ curl -LsSf https://astral.sh/uv/install.sh | sh
 
 # ruff
 curl -LsSf https://astral.sh/ruff/install.sh | sh
-
-# rtk (optional — Rust Token Killer)
-curl -fsSL https://raw.githubusercontent.com/rtk-ai/rtk/refs/heads/master/install.sh | sh
 ```
 
 - **`BRAVE_API_KEY`** — só se for ativar `brave-search`.
@@ -220,9 +208,5 @@ Edite as regras de permissão no `opencode.jsonc` conforme seu fluxo de trabalho
   noutras distros, binário standalone da Astral).
 - **Memória sem credenciais:** `opencode-mem` é local (SQLite + embeddings
   locais); nada sai da máquina.
-- **rtk integrado automaticamente:** o `rtk` é instalado pelo instalador e o
-  plugin local `plugins/rtk.ts` (carregado pelo OpenCode em
-  `~/.config/opencode/plugins/`) reescreve comandos bash via `rtk rewrite`,
-  reduzindo tokens em 60-90%. Não precisa de `rtk init`.
 - MCPs e LSPs consomem contexto/tokens — mantenha ativos só os necessários
   por projeto.

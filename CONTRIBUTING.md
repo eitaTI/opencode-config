@@ -8,11 +8,6 @@ to a user's global OpenCode config dir.
 
 - `opencode.jsonc` — main config (LSP, MCP, plugins, `instructions`).
 - `bin/install.mjs` — cross-platform installer (runs under Node).
-- `plugins/rtk.ts` — local OpenCode plugin (vendored from rtk, `hooks/opencode/rtk.ts`).
-  It auto-rewrites bash commands via `rtk rewrite` (token savings). Loaded by
-  OpenCode from `~/.config/opencode/plugins/`; do NOT add it to the `plugin`
-  array (that would try `npm i rtk`). Keep it in sync with upstream; the only
-  local change is `which`/`where` for Windows PATH detection.
 - `skills/` — global skills copied into the user's config.
 - `commands/` — custom slash commands.
 - `docs/` — `lsp.md`, `mcp.md`, `plugins.md`.
@@ -28,7 +23,7 @@ to a user's global OpenCode config dir.
 ## Changing the installer (`bin/install.mjs`)
 
 - It runs under **Node** (`#!/usr/bin/env node`), not Bun.
-- It **auto-installs** missing prerequisites (Node.js, uv, ruff, rtk) unless
+- It **auto-installs** missing prerequisites (Node.js, uv, ruff) unless
   `--no-auto-install` is specified.
 - Use `--force` to skip the overwrite confirmation prompt.
 - Use `--clean` to remove all config files without reinstalling.
@@ -39,7 +34,7 @@ to a user's global OpenCode config dir.
 
 Windows users always run OpenCode under `pwsh` (PowerShell 7) as the default
 shell — we do **not** set `"shell": "bash"`. To keep the existing Unix
-permission patterns and the `rtk` plugin relevant, the installer:
+permission patterns relevant, the installer:
 
 1. Auto-installs **Git for Windows** via `winget` (direct download fallback
    that resolves the latest release from the GitHub API at runtime).

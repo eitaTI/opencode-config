@@ -3,7 +3,7 @@
 // Run via:  npx github:EitaTI/opencode-config
 // Works on Windows, macOS and Linux. Copies opencode.jsonc, skills/,
 // commands/ and docs/ into the OpenCode global config dir (~/.config/opencode).
-// Auto-installs missing prerequisites (Node.js, uv, ruff, rtk) unless
+// Auto-installs missing prerequisites (Node.js, uv, ruff) unless
 // --no-auto-install is specified.
 
 import fs from "node:fs";
@@ -207,7 +207,7 @@ const PREREQS_CORE = [
     // Windows-only: on Linux/macOS git is assumed present. On Windows we
     // install Git for Windows (via winget) which also ships a GNU toolchain
     // (grep/head/tail/sed/awk/ls/cat) under usr\bin — exposed on PATH so the
-    // existing Unix permission patterns + rtk keep working inside pwsh.
+    // existing Unix permission patterns keep working inside pwsh.
     name: "git",
     note: "version control + GNU tools (grep/head/tail/sed) used inside pwsh",
     getInstallCmd() {
@@ -268,30 +268,7 @@ const PREREQS_CORE = [
   },
 ];
 
-const PREREQS_OPTIONAL = [
-  {
-    name: "rtk",
-    note: "filters shell output to reduce LLM token consumption by 60-90% (recommended)",
-    getInstallCmd() {
-      // Windows: download pre-built binary from GitHub releases
-      if (isWin) {
-        return {
-          cmd: "powershell",
-          args: ["-c", "$ProgressPreference='SilentlyContinue'; $v='0.43.0'; $url=\"https://github.com/rtk-ai/rtk/releases/download/v$v/rtk-x86_64-pc-windows-msvc.zip\"; Invoke-WebRequest -Uri $url -OutFile \"$env:TEMP\\rtk.zip\"; Add-Type -AssemblyName System.IO.Compression.FileSystem; if (Test-Path \"$env:USERPROFILE\\.local\\bin\\rtk.exe\") { Remove-Item \"$env:USERPROFILE\\.local\\bin\\rtk.exe\" -Force }; [System.IO.Compression.ZipFile]::ExtractToDirectory(\"$env:TEMP\\rtk.zip\", \"$env:USERPROFILE\\.local\\bin\"); if ($env:PATH -notmatch [regex]::Escape($env:USERPROFILE+'\\.local\\bin')) { [Environment]::SetEnvironmentVariable('PATH', $env:PATH+';'+$env:USERPROFILE+'\\.local\\bin', 'User') }"],
-        };
-      }
-      // Arch/CachyOS: rtk is AUR-only and requires interactive sudo.
-      // Cannot be auto-installed — user must run the command manually.
-      if (isArchBased()) return null;
-      return { cmd: "bash", args: ["-c", "curl -fsSL https://raw.githubusercontent.com/rtk-ai/rtk/refs/heads/master/install.sh | sh"] };
-    },
-    getManualCmd() {
-      if (!isArchBased()) return null;
-      const h = getAurHelper() || "paru";
-      return `${h} -S --skipreview rtk-bin`;
-    },
-  },
-];
+const PREREQS_OPTIONAL = [];
 
 // LSPs invoked *directly* by opencode.jsonc that need a real binary on PATH.
 // LSPs run via `npx -y` (basedpyright, tailwindcss, emmet, eslint-lsp,
@@ -513,7 +490,7 @@ Options:
   -h, --help          Show this help.
 
 What it does:
-   1. Checks for required tools (Node.js, uv, ruff; Git on Windows). rtk is optional.
+   1. Checks for required tools (Node.js, uv, ruff; Git on Windows).
    2. Auto-installs missing prerequisites (unless --no-auto-install). On Windows,
       Git for Windows is installed via winget and its GNU tools (grep/head/tail)
       are exposed on PATH so the config works inside pwsh.
