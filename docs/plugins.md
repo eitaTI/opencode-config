@@ -7,7 +7,6 @@ entrada no array `"plugin"` do `opencode.jsonc`.
 
 | Plugin | Propósito | Motivação | Config extra |
 |--------|-----------|-----------|--------------|
-| `opencode-websearch-cited` | Web search com citações (injeta MCP `websearch`/Exa) | Fontes rastreáveis em respostas | nenhuma (remoto) |
 | `@tarquinen/opencode-dcp` | Poda dinâmica do contexto da conversa | Otimiza uso de tokens em sessões longas | Configurável via `~/.config/opencode/dcp.jsonc` (Windows: `%USERPROFILE%\.config\opencode\dcp.jsonc`) |
 | `opencode-mem` | Memória persistente local (SQLite + índice vetorial, embeddings locais) | Lembra o projeto e o usuário entre sessões, **sem API key** | `search`/`add`/`list` funcionam sem provedor; auto-captura precisa de modelo com tool-calls. Gera `opencode-mem.jsonc` (não versionar) |
 | `opencode-wakatime` | Métricas de tempo de programação | Rastreia tempo gasto em cada projeto/file | Requer conta WakaTime + API key |

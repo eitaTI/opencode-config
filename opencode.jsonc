@@ -210,7 +210,6 @@
   },
 
   "plugin": [
-    "opencode-websearch-cited",
     "@tarquinen/opencode-dcp",
     "opencode-mem",
     "opencode-wakatime",

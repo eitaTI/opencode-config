@@ -27,9 +27,3 @@ apenas os necessários por projeto.
 | Nome | Pacote | Config extra |
 |------|--------|--------------|
 | `brave-search` | `npx -y @brave/brave-search-mcp-server --transport stdio` | Exporte `BRAVE_API_KEY` (ou `BRAVE_API_KEY_FILE`) e troque `"enabled": false` por `true` |
-
-## MCP adicionado por plugin
-
-O plugin **`opencode-websearch-cited`** injeta um MCP remoto `websearch`
-(`https://mcp.exa.ai/mcp?tools=web_search_exa`) que traz busca web com
-citações. Conta como ativo por padrão (parte do plugin, não do bloco `mcp`).
