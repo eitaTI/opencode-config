@@ -28,15 +28,15 @@ detect_distro() {
 	fi
 }
 
-# --- curl check (needed for ruff, uv, rtk installation) ---
+# --- curl check (needed for ruff, uv installation) ---
 if ! command -v curl >/dev/null 2>&1; then
 	echo "==> ERROR: curl is required but not installed."
 	case "$(detect_distro)" in
-	arch)    echo "    Install with: sudo pacman -S curl" ;;
-	debian)  echo "    Install with: sudo apt-get install -y curl" ;;
-	fedora)  echo "    Install with: sudo dnf install -y curl" ;;
-	suse)    echo "    Install with: sudo zypper install -y curl" ;;
-	*)       echo "    Install curl manually and re-run this script." ;;
+	arch) echo "    Install with: sudo pacman -S curl" ;;
+	debian) echo "    Install with: sudo apt-get install -y curl" ;;
+	fedora) echo "    Install with: sudo dnf install -y curl" ;;
+	suse) echo "    Install with: sudo zypper install -y curl" ;;
+	*) echo "    Install curl manually and re-run this script." ;;
 	esac
 	exit 1
 fi
@@ -100,7 +100,8 @@ fi
 # Used as a fallback when pacman fails (e.g. a broken mirror). `paru` accepts
 # `--skipreview`; `yay` requires `--noansweredit`.
 AUR_HELPER=""
-if command -v paru >/dev/null 2>&1; then AUR_HELPER="paru";
+if command -v paru >/dev/null 2>&1; then
+	AUR_HELPER="paru"
 elif command -v yay >/dev/null 2>&1; then AUR_HELPER="yay"; fi
 AUR_EDIT_FLAG="--skipreview"
 [ "$AUR_HELPER" = "yay" ] && AUR_EDIT_FLAG="--noansweredit"
@@ -152,27 +153,6 @@ else
 	echo "==> uv already present: $(uv --version)"
 fi
 
-# --- rtk (Rust Token Killer) ---
-# Reduces LLM token consumption by 60-90% by filtering shell command output.
-# Single Rust binary, zero dependencies.
-# On Arch, rtk is AUR-only and requires interactive sudo — cannot be
-# auto-installed. Print the manual command instead.
-if ! command -v rtk >/dev/null 2>&1; then
-	case "$DISTRO" in
-		arch)
-			aur_cmd="${AUR_HELPER:-paru}"
-			echo "==> rtk: install manually (AUR requires interactive sudo):"
-			echo "    $aur_cmd -S --skipreview rtk-bin"
-			;;
-		*)
-			echo "==> Installing rtk (Rust Token Killer)..."
-			curl -fsSL https://raw.githubusercontent.com/rtk-ai/rtk/refs/heads/master/install.sh | sh
-			;;
-	esac
-else
-	echo "==> rtk already present: $(rtk --version)"
-fi
-
 # --- LSPs invoked *directly* by opencode.jsonc ---
 # (bash-language-server, yaml-language-server)
 # LSPs run via `npx -y` (vtsls, docker, vscode-*, basedpyright,
@@ -185,33 +165,33 @@ fi
 # On Arch/CachyOS, installs stay exclusive to pacman/AUR (yay|paru) — never npm.
 # On other distros, the npm package is used.
 install_lsp() {
-  local bin="$1" pac="$2" aur="$3" npm="$4"
-  if command -v "$bin" >/dev/null 2>&1; then
-    echo "==> $bin already present"
-    return
-  fi
-  echo "==> Installing $bin..."
-  if [ "$DISTRO" = "arch" ]; then
-    if [ -n "$pac" ]; then
-      sudo pacman -S --noconfirm "$pac"
-    elif [ -n "$AUR_HELPER" ] && [ -n "$aur" ]; then
-      "$AUR_HELPER" -S --noconfirm "$AUR_EDIT_FLAG" "$aur"
-    else
-      echo "    (warn) $bin has no pacman package and no AUR helper (yay/paru) on this system." >&2
-      if [ -n "$aur" ]; then
-        echo "    Install an AUR helper then run: $AUR_HELPER -S $AUR_EDIT_FLAG $aur" >&2
-      else
-        echo "    No Arch package available for $bin — install manually." >&2
-      fi
-    fi
-  else
-    npm i -g "$npm"
-  fi
+	local bin="$1" pac="$2" aur="$3" npm="$4"
+	if command -v "$bin" >/dev/null 2>&1; then
+		echo "==> $bin already present"
+		return
+	fi
+	echo "==> Installing $bin..."
+	if [ "$DISTRO" = "arch" ]; then
+		if [ -n "$pac" ]; then
+			sudo pacman -S --noconfirm "$pac"
+		elif [ -n "$AUR_HELPER" ] && [ -n "$aur" ]; then
+			"$AUR_HELPER" -S --noconfirm "$AUR_EDIT_FLAG" "$aur"
+		else
+			echo "    (warn) $bin has no pacman package and no AUR helper (yay/paru) on this system." >&2
+			if [ -n "$aur" ]; then
+				echo "    Install an AUR helper then run: $AUR_HELPER -S $AUR_EDIT_FLAG $aur" >&2
+			else
+				echo "    No Arch package available for $bin — install manually." >&2
+			fi
+		fi
+	else
+		npm i -g "$npm"
+	fi
 }
 
 #            binary                     pacman                    AUR                          npm
-install_lsp bash-language-server       bash-language-server      ""                           bash-language-server
-install_lsp yaml-language-server       yaml-language-server      ""                           yaml-language-server
+install_lsp bash-language-server bash-language-server "" bash-language-server
+install_lsp yaml-language-server yaml-language-server "" yaml-language-server
 
 # Se o Node foi instalado via FNM/nvm nesta mesma execução, o `npm`
 # pode não estar no PATH do shell atual — disponibiliza antes do `npm i -g`.
